@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>screink の設定</title>
+    <link rel="stylesheet" href="../shared/page.css" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <h1>screink の設定</h1>
+
+      <p class="note">変更した内容はその場で保存されます。</p>
+
+      <form id="settings-form">
+        <fieldset>
+          <legend>切り出す範囲</legend>
+
+          <p class="note">
+            指定した位置を中心に、この大きさの範囲を切り出して読み取ります。単位はCSSピクセルです。URLは横に長く縦に薄いため、横に広い範囲のほうが適しています。
+          </p>
+
+          <div class="field">
+            <label for="region-width">幅</label>
+            <input
+              type="number"
+              id="region-width"
+              name="regionWidth"
+              min="120"
+              max="4000"
+              step="10"
+              inputmode="numeric"
+            />
+            <span class="unit">px</span>
+          </div>
+
+          <div class="field">
+            <label for="region-height">高さ</label>
+            <input
+              type="number"
+              id="region-height"
+              name="regionHeight"
+              min="80"
+              max="4000"
+              step="10"
+              inputmode="numeric"
+            />
+            <span class="unit">px</span>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>表示</legend>
+
+          <div class="field field--check">
+            <input type="checkbox" id="show-region-outline" name="showRegionOutline" />
+            <label for="show-region-outline">照準モード中に、切り出す範囲の枠を表示する</label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>技術検証（PoC）用</legend>
+
+          <div class="field field--check">
+            <input type="checkbox" id="open-capture-in-tab" name="openCaptureInTab" />
+            <label for="open-capture-in-tab">
+              切り出した画像を、確認を待たず新しいタブで開く
+            </label>
+          </div>
+
+          <p class="note">
+            off の場合も、切り出したあとに表示されるパネルのボタンから開けます。会議中にタブが切り替わるのを避けたい場合は off のままにしてください。
+          </p>
+        </fieldset>
+
+        <p class="status" id="status" role="status"></p>
+
+        <div class="actions">
+          <button type="button" id="reset" class="secondary">既定値に戻す</button>
+        </div>
+      </form>
+
+      <hr />
+
+      <h2>ショートカットキー</h2>
+      <p>
+        照準モードの開始・解除は <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> に割り当てられています。変更するには Chrome のショートカット設定を開いてください。
+      </p>
+      <div class="actions">
+        <button type="button" id="open-shortcuts" class="secondary">
+          Chrome のショートカット設定を開く
+        </button>
+      </div>
+
+      <hr />
+
+      <h2>プライバシー</h2>
+      <ul>
+        <li>画像の解析はすべてブラウザ内で完結します。画像もURLも外部へ送信されません。</li>
+        <li>切り出した画像・認識結果・指した位置は保存されません。保存されるのはこのページの設定だけです。</li>
+        <li>画面を取得するのは、位置を確定した瞬間の1枚だけです。常時取得は行いません。</li>
+      </ul>
+    </main>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

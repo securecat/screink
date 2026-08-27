@@ -1,0 +1,233 @@
+/*
+ * 照準モードのオーバーレイ。
+ *
+ * このスタイルは chrome.scripting.insertCSS で注入する。
+ * 拡張が注入したスタイルシートはページ側の CSP（style-src）の対象外になるため、
+ * 会議サービスのような厳しい CSP のページでも確実に適用される。
+ * （逆に、content script が生成した <style> 要素や style 属性は
+ *   ページの CSP に縛られるため使わない）
+ *
+ * Shadow DOM を使っていない代わりに、`all: initial` でページ側スタイルの
+ * 影響を打ち消し、レイアウトに関わる宣言には !important を付けている。
+ *
+ * 配色について：
+ * このオーバーレイは「どんな内容の上に重なるか分からない」場所に描かれる。
+ * そのためライト／ダークの切り替えは行わず、
+ *   - パネル類は不透明な暗色サーフェス（＝背景の内容から独立してコントラストを確保）
+ *   - 照準線・領域枠は明色と暗色の二重描画（＝どちらかが必ず 3:1 を超える）
+ * という方針で、背景に依存せずコントラストを担保する。
+ * opacity は使わない（実効コントラスト比が下がるため）。
+ */
+
+.screink-root,
+.screink-root * {
+  all: initial;
+  box-sizing: border-box !important;
+  font-family: sans-serif !important;
+  line-height: 1.6 !important;
+}
+
+.screink-root [hidden] {
+  display: none !important;
+}
+
+.screink-root {
+  /* サーフェス・テキスト */
+  --screink-surface: #11162b;
+  --screink-text: #f5f6fa;
+  --screink-text-note: #b9bfd4;
+
+  /* UI コンポーネントの境界・インジケーター（装飾用とは分ける） */
+  --screink-ui-border: #f5f6fa;
+  --screink-focus: #ffd24a;
+
+  /* 照準線・領域枠のガイド（二重描画用の2色） */
+  --screink-guide-light: #ffffff;
+  --screink-guide-dark: #11162b;
+
+  /* ボタン */
+  --screink-button-bg: #f5f6fa;
+  --screink-button-text: #11162b;
+
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  pointer-events: none !important;
+  color: var(--screink-text) !important;
+  font-size: 16px !important;
+}
+
+/*
+ * キャプチャ直前に自分自身を写り込ませないための一時的な非表示。
+ * visibility ではなく display を使う。visibility では要素が
+ * 合成レイヤーとして残る場合があり、キャプチャに写り込むことがある。
+ */
+.screink-root--capturing {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------------ *
+ * クリック受け止め用のレイヤー
+ * ページ側にクリックを一切届けないため、透明な全画面レイヤーで受け取る。
+ * これにより会議サービスのクリックハンドラ（ピン留め・全画面化など）が
+ * 誤発動しない。照準モードを抜けるとこのレイヤーは消える。
+ * ------------------------------------------------------------------ */
+.screink-catcher {
+  display: block !important;
+  position: fixed !important;
+  inset: 0 !important;
+  background: transparent !important;
+  cursor: crosshair !important;
+  pointer-events: auto !important;
+}
+
+/*
+ * 受け止めレイヤーはキー入力を確実に受け取るためにフォーカスを当てる。
+ * フォーカスインジケーターは消さず、ビューポートを囲む枠として描く。
+ * 「照準モードが有効である」ことの視覚的な表明も兼ねる。
+ * （プログラム的なフォーカスでも必ず表示させたいので :focus を使う）
+ */
+.screink-catcher:focus {
+  box-shadow:
+    inset 0 0 0 3px var(--screink-focus),
+    inset 0 0 0 6px var(--screink-guide-dark) !important;
+}
+
+/* ------------------------------------------------------------------ *
+ * 照準線
+ * ------------------------------------------------------------------ */
+.screink-crosshair {
+  display: block !important;
+  position: fixed !important;
+  pointer-events: none !important;
+  background: var(--screink-guide-dark) !important;
+  box-shadow: 0 0 0 2px var(--screink-guide-light) !important;
+}
+
+.screink-crosshair--v {
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 2px !important;
+}
+
+.screink-crosshair--h {
+  left: 0 !important;
+  right: 0 !important;
+  height: 2px !important;
+}
+
+/* ------------------------------------------------------------------ *
+ * 切り出し領域の枠
+ * ------------------------------------------------------------------ */
+.screink-region {
+  display: block !important;
+  position: fixed !important;
+  pointer-events: none !important;
+  background: transparent !important;
+  border: 2px solid var(--screink-guide-light) !important;
+  box-shadow:
+    0 0 0 2px var(--screink-guide-dark),
+    inset 0 0 0 2px var(--screink-guide-dark) !important;
+}
+
+/* ------------------------------------------------------------------ *
+ * ステータスバー（モード中であることの明示）
+ * ------------------------------------------------------------------ */
+.screink-bar {
+  display: block !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  padding: 10px 16px !important;
+  background: var(--screink-surface) !important;
+  color: var(--screink-text) !important;
+  font-size: 16px !important;
+  text-align: center !important;
+  pointer-events: none !important;
+  box-shadow: 0 0 0 2px var(--screink-ui-border) !important;
+}
+
+.screink-bar__name {
+  font-weight: 700 !important;
+}
+
+.screink-bar__hint {
+  color: var(--screink-text-note) !important;
+}
+
+.screink-key {
+  display: inline-block !important;
+  padding: 0 6px !important;
+  border: 1px solid var(--screink-ui-border) !important;
+  border-radius: 4px !important;
+  color: var(--screink-text) !important;
+  font-family: monospace !important;
+  font-size: 16px !important;
+}
+
+/* ------------------------------------------------------------------ *
+ * 結果パネル
+ * 自動では消さない。ユーザーが閉じるまで表示を維持する。
+ * ------------------------------------------------------------------ */
+.screink-panel {
+  display: block !important;
+  position: fixed !important;
+  left: 50% !important;
+  bottom: 24px !important;
+  transform: translateX(-50%) !important;
+  width: min(560px, calc(100vw - 32px)) !important;
+  padding: 20px !important;
+  background: var(--screink-surface) !important;
+  color: var(--screink-text) !important;
+  border-radius: 10px !important;
+  pointer-events: auto !important;
+  box-shadow: 0 0 0 2px var(--screink-ui-border) !important;
+}
+
+.screink-panel__title {
+  display: block !important;
+  margin: 0 0 8px !important;
+  color: var(--screink-text) !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+}
+
+.screink-panel__body {
+  display: block !important;
+  margin: 0 0 8px !important;
+  color: var(--screink-text) !important;
+  font-size: 16px !important;
+}
+
+.screink-panel__note {
+  display: block !important;
+  margin: 0 0 16px !important;
+  color: var(--screink-text-note) !important;
+  font-size: 16px !important;
+  font-family: monospace !important;
+}
+
+.screink-panel__actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+}
+
+.screink-button {
+  display: inline-block !important;
+  min-height: 44px !important;
+  padding: 10px 18px !important;
+  background: var(--screink-button-bg) !important;
+  color: var(--screink-button-text) !important;
+  border: 2px solid var(--screink-ui-border) !important;
+  border-radius: 8px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+
+.screink-root :focus-visible {
+  outline: 3px solid var(--screink-focus) !important;
+  outline-offset: 3px !important;
+}

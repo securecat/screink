@@ -1,0 +1,56 @@
+/* debug/capture 固有のスタイル。共通部分は ../shared/page.css を参照。 */
+
+body {
+  padding: 32px 24px;
+}
+
+main {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 26px;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+figure {
+  margin: 20px 0;
+}
+
+/*
+ * 画像の縁は「その画像がどこまでか」を示す UI 的な境界なので、
+ * 装飾用の --divider ではなく --ui-border を使う。
+ */
+#image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: var(--surface);
+  border: 2px solid var(--ui-border);
+  border-radius: 6px;
+}
+
+figcaption {
+  margin: 12px 0 0;
+  color: var(--text-note);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+ul {
+  margin: 0 0 12px;
+  padding-left: 24px;
+}
+
+li {
+  margin: 0 0 6px;
+}
+
+code {
+  font-family: monospace;
+  font-size: 16px;
+}

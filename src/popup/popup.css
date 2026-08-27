@@ -1,0 +1,27 @@
+/* popup 固有のスタイル。共通部分は ../shared/page.css を参照。 */
+
+body {
+  width: 340px;
+}
+
+/*
+ * A11Y.md の規定により、popup では見出しサイズを本文と同じにしてよい。
+ * 太字と余白で階層を示す。
+ */
+h1,
+h2 {
+  font-size: 16px;
+}
+
+ul {
+  margin: 0 0 12px;
+  padding-left: 24px;
+}
+
+li {
+  margin: 0 0 4px;
+}
+
+#start {
+  width: 100%;
+}

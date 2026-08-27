@@ -1,0 +1,76 @@
+/* options 固有のスタイル。共通部分は ../shared/page.css を参照。 */
+
+body {
+  padding: 32px 24px;
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 26px;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+fieldset {
+  margin: 0 0 24px;
+  padding: 16px 20px 20px;
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: 10px;
+}
+
+legend {
+  padding: 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.field--check {
+  align-items: flex-start;
+}
+
+.field label {
+  min-width: 4em;
+}
+
+.field--check label {
+  min-width: 0;
+}
+
+.unit {
+  color: var(--text-note);
+  font-family: monospace;
+}
+
+ul {
+  margin: 0 0 12px;
+  padding-left: 24px;
+}
+
+li {
+  margin: 0 0 6px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0 0;
+}

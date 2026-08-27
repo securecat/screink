@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>screink — 切り出した画像</title>
+    <link rel="stylesheet" href="../shared/page.css" />
+    <link rel="stylesheet" href="capture.css" />
+  </head>
+  <body>
+    <main>
+      <h1>切り出した画像</h1>
+
+      <p class="note">
+        技術検証（PoC）用の画面です。照準モードで指定した位置と、実際に切り出された範囲が一致しているかを目視で確認するために使います。
+      </p>
+
+      <p class="status" id="status" role="status"></p>
+
+      <figure id="figure" hidden>
+        <img id="image" alt="照準モードで指定した位置の周辺を切り出した画像" />
+        <figcaption id="caption" class="mono"></figcaption>
+      </figure>
+
+      <hr />
+
+      <h2>この画像の扱い</h2>
+      <ul>
+        <li>この画像はブラウザのメモリ上にだけ存在し、ファイルにも <code>chrome.storage</code> にも保存されません。</li>
+        <li>拡張が停止する（しばらく操作しない、Chrome を再起動するなど）と失われます。</li>
+        <li>外部へは送信されません。screink は外部への通信先を一切持たない構成になっています。</li>
+      </ul>
+    </main>
+
+    <script type="module" src="capture.js"></script>
+  </body>
+</html>

@@ -1,0 +1,166 @@
+/*
+ * 拡張ページ（popup / options / debug）共通のスタイル。
+ *
+ * 配色は CSS カスタムプロパティで定義し、ライトテーマ・ダークテーマの
+ * それぞれで独立してコントラスト比を満たす値を置いている。
+ *
+ * 「装飾的な区切り線」と「UI コンポーネントの境界」は別の変数に分けている
+ * （--divider と --ui-border）。用途が違えば必要なコントラストの根拠も違うため。
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #ffffff;
+  --surface: #f4f4f6;
+  --text: #1a1a1a;
+  --text-note: #595959;
+
+  /* 装飾的な区切り線・境界（それでも 3:1 は確保する） */
+  --divider: #8a8a8a;
+  /* UI コンポーネントの境界・インジケーター */
+  --ui-border: #5f5f5f;
+
+  --accent: #0d47a1;
+  --accent-text: #ffffff;
+  --focus: #0d47a1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #18181b;
+    --surface: #232327;
+    --text: #f4f4f5;
+    --text-note: #9a9aa5;
+
+    --divider: #6e6e76;
+    --ui-border: #9a9aa5;
+
+    --accent: #7ab3ff;
+    --accent-text: #18181b;
+    --focus: #7ab3ff;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+h1,
+h2 {
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+.note {
+  color: var(--text-note);
+  font-size: 16px;
+}
+
+.mono {
+  font-family: monospace;
+  font-size: 16px;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  text-decoration-thickness: 3px;
+}
+
+button {
+  min-height: 44px;
+  padding: 10px 18px;
+  background: var(--accent);
+  color: var(--accent-text);
+  border: 2px solid var(--ui-border);
+  border-radius: 8px;
+  font-family: sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: var(--bg);
+  color: var(--text);
+}
+
+input[type='number'] {
+  min-height: 44px;
+  padding: 8px 10px;
+  background: var(--bg);
+  color: var(--text);
+  border: 2px solid var(--ui-border);
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 16px;
+}
+
+input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+kbd {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid var(--ui-border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: monospace;
+  font-size: 16px;
+}
+
+hr {
+  height: 0;
+  margin: 20px 0;
+  border: 0;
+  border-top: 1px solid var(--divider);
+}
+
+.card {
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: 10px;
+}
+
+/*
+ * ステータスメッセージ。自動では消さない。
+ * （消すのは、ユーザーの注視が別へ移ったことが明白なタイミングのみ）
+ */
+.status {
+  margin: 12px 0 0;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.status:empty {
+  margin: 0;
+}
