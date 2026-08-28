@@ -41,6 +41,26 @@ const MAX_QR_CANDIDATES = 4;
 const HIT_MARGIN = 16;
 
 /**
+ * 切り出した画像の周囲に足す白い余白（クワイエットゾーン）の割合と下限。
+ *
+ * QRコードの規格は、コードの周囲に4モジュール分の余白を要求する。
+ * ところが実際のスライドでは、コードが背景や画面の端にぴったり接していて
+ * 余白が無いことがある。また、コードを狭く切り出すほど余白は削られる。
+ *
+ * 切り出した画像に白い縁を足すことで、この余白を人工的に補う。
+ * 反転したコード（暗い背景に白いコード）でも、jsQR の attemptBoth が
+ * 画像全体を反転するため、白い縁もまとめて黒くなり正しく働く。
+ */
+const QUIET_ZONE_RATIO = 0.08;
+const QUIET_ZONE_MIN = 12;
+
+/**
+ * 走査にかける画像の一辺の上限（物理ピクセル）。
+ * これを超える切り出しは縮小してから走査する（`detectQrCodes` を参照）。
+ */
+const MAX_DECODE_SIDE = 1200;
+
+/**
  * 直近の切り出し結果。PoC の目視確認用に service worker のメモリ上だけで保持し、
  * chrome.storage には書かない。service worker が停止すれば失われる（それでよい）。
  */
@@ -131,14 +151,20 @@ function cropRegion(bitmap, shot, region, dpr) {
   const width = Math.max(Math.min(rawW, shot.width - x), 1);
   const height = Math.max(Math.min(rawH, shot.height - y), 1);
 
-  const canvas = new OffscreenCanvas(width, height);
+  // 周囲に白い余白を足す（クワイエットゾーンの補完）
+  const padding = Math.max(QUIET_ZONE_MIN, Math.round(Math.min(width, height) * QUIET_ZONE_RATIO));
+
+  const canvas = new OffscreenCanvas(width + padding * 2, height + padding * 2);
   const ctx = canvas.getContext('2d', { alpha: false });
-  ctx.drawImage(bitmap, x, y, width, height, 0, 0, width, height);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bitmap, x, y, width, height, padding, padding, width, height);
 
   return {
     canvas,
     device: { x, y, width, height },
     css: { x: region.x, y: region.y, width: region.width, height: region.height },
+    padding,
     clamped: x !== rawX || y !== rawY || width !== rawW || height !== rawH,
   };
 }
@@ -177,26 +203,49 @@ function bboxOfLocation(location) {
  * @returns {Array<{text: string, version: number, bbox: {x:number,y:number,width:number,height:number}}>}
  */
 function detectQrCodes(source) {
-  const work = new OffscreenCanvas(source.width, source.height);
+  /*
+   * 大きな切り出しは縮小してから走査する。
+   *
+   * 走査時間は画素数に比例する。一方、QRコードが読める下限は
+   * 物理48px（1モジュールあたり約1.7px）と実測できている（仕様書 §5.1）。
+   * 大きな範囲でしか見つからないコードは、そもそも大きく写っているので、
+   * 縮小しても下限を大きく上回る。小さなコードは狭い段階で先に見つかるため、
+   * 縮小の影響を受けない。
+   */
+  const scale = Math.min(1, MAX_DECODE_SIDE / Math.max(source.width, source.height));
+  const width = Math.max(1, Math.round(source.width * scale));
+  const height = Math.max(1, Math.round(source.height * scale));
+
+  const work = new OffscreenCanvas(width, height);
   const ctx = work.getContext('2d', { alpha: false, willReadFrequently: true });
-  ctx.drawImage(source, 0, 0);
+  ctx.drawImage(source, 0, 0, source.width, source.height, 0, 0, width, height);
 
   const found = [];
   for (let attempt = 0; attempt < MAX_QR_CANDIDATES; attempt += 1) {
-    const image = ctx.getImageData(0, 0, work.width, work.height);
+    const image = ctx.getImageData(0, 0, width, height);
     // attemptBoth：白地に黒／黒地に白のどちらも試す。暗い背景のスライド向け。
     const code = jsQR(image.data, image.width, image.height, {
       inversionAttempts: 'attemptBoth',
     });
     if (!code || typeof code.data !== 'string' || code.data === '') break;
 
-    const bbox = bboxOfLocation(code.location);
-    found.push({ text: code.data, version: code.version, bbox });
+    const workBbox = bboxOfLocation(code.location);
+    found.push({
+      text: code.data,
+      version: code.version,
+      // 縮小した座標を元の切り出し画像の座標へ戻す
+      bbox: {
+        x: Math.round(workBbox.x / scale),
+        y: Math.round(workBbox.y / scale),
+        width: Math.round(workBbox.width / scale),
+        height: Math.round(workBbox.height / scale),
+      },
+    });
 
-    if (bbox.width <= 0 || bbox.height <= 0) break;
+    if (workBbox.width <= 0 || workBbox.height <= 0) break;
     // 見つけた領域を潰して次を探す
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(bbox.x - 2, bbox.y - 2, bbox.width + 4, bbox.height + 4);
+    ctx.fillRect(workBbox.x - 2, workBbox.y - 2, workBbox.width + 4, workBbox.height + 4);
   }
   return found;
 }
@@ -210,9 +259,10 @@ function detectQrCodes(source) {
  */
 function toCandidate(code, crop, dpr, point) {
   // 切り出し画像内の物理ピクセル -> キャプチャ画像の物理ピクセル -> CSSピクセル
+  // 切り出し画像には人工的な余白が足してあるので、その分を引く
   const cssBbox = {
-    x: (code.bbox.x + crop.device.x) / dpr,
-    y: (code.bbox.y + crop.device.y) / dpr,
+    x: (code.bbox.x - crop.padding + crop.device.x) / dpr,
+    y: (code.bbox.y - crop.padding + crop.device.y) / dpr,
     width: code.bbox.width / dpr,
     height: code.bbox.height / dpr,
   };

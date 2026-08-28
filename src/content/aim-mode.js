@@ -221,6 +221,11 @@
     return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
   }
 
+  /** 探索を始める最小の一辺（CSSピクセル）。物理48pxが読める下限なので、その少し上から。 */
+  const SMALLEST_REGION = 64;
+  /** 段階ごとの拡大率。細かいほど隣のコードを切り離せるが、試行回数が増える。 */
+  const REGION_GROWTH = 1.5;
+
   /**
    * 試す領域を、狭いものから順に並べる。
    *
@@ -232,14 +237,28 @@
    *    最初に当たるのは、指した位置にいちばん近いコードになる。
    *
    * 逆に、画面に大きく表示されたQRコードは狭い枠に収まらないため、
-   * 見つからなければ順に広げていく。
+   * 見つからなければ順に広げ、最後は画面全体まで試す。
+   *
+   * 段階を細かくしているのは実測に基づく。段階が粗いと、近接した小さな
+   * QRコード（一辺80px・間隔5〜10px）が、どの段階でも隣を巻き込んで
+   * 読めなくなる。最小の段階を小さく、刻みを細かくすることで、
+   * 指したコードだけが写る段階が現れるようにしている。
+   *
+   * 狭く切り出すと余白（クワイエットゾーン）が無くなるが、それは
+   * service worker 側で白い縁を足して補う。
    */
   function regionsToTry() {
     const base = settings.qrRegionSize;
-    const sizes = [Math.round(base / 4), Math.round(base / 2), base, base * 2];
+    const viewportMax = Math.max(window.innerWidth, window.innerHeight);
+
+    const sizes = [];
+    for (let size = SMALLEST_REGION; size < base * 2; size = Math.round(size * REGION_GROWTH)) {
+      sizes.push(size);
+    }
+    sizes.push(base, base * 2, viewportMax);
 
     const regions = [];
-    for (const size of sizes) {
+    for (const size of [...new Set(sizes)].sort((a, b) => a - b)) {
       const region = squareRegion(size);
       if (!regions.some((existing) => sameRegion(existing, region))) regions.push(region);
     }
