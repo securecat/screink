@@ -6,8 +6,7 @@ const resetButton = document.querySelector('#reset');
 const shortcutsButton = document.querySelector('#open-shortcuts');
 
 const numberFields = {
-  regionWidth: document.querySelector('#region-width'),
-  regionHeight: document.querySelector('#region-height'),
+  qrRegionSize: document.querySelector('#qr-region-size'),
 };
 
 const checkboxFields = {
@@ -28,8 +27,7 @@ function setStatus(message, owner = null) {
 }
 
 function populate(settings) {
-  numberFields.regionWidth.value = String(settings.regionWidth);
-  numberFields.regionHeight.value = String(settings.regionHeight);
+  numberFields.qrRegionSize.value = String(settings.qrRegionSize);
   checkboxFields.showRegionOutline.checked = settings.showRegionOutline;
   checkboxFields.openCaptureInTab.checked = settings.openCaptureInTab;
 }

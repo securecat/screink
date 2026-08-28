@@ -11,15 +11,21 @@
       <h1>切り出した画像</h1>
 
       <p class="note">
-        技術検証（PoC）用の画面です。照準モードで指定した位置と、実際に切り出された範囲が一致しているかを目視で確認するために使います。
+        技術検証（PoC）用の画面です。照準モードで指定した位置、実際に切り出された範囲、認識できたQRコードの位置が一致しているかを目視で確認するために使います。
       </p>
 
       <p class="status" id="status" role="status"></p>
 
+      <!-- 画像と候補一覧は capture.js が組み立てる（src や項目が空の要素を置かないため） -->
       <figure id="figure" hidden>
-        <img id="image" alt="照準モードで指定した位置の周辺を切り出した画像" />
+        <div class="stage" id="stage"></div>
         <figcaption id="caption" class="mono"></figcaption>
       </figure>
+
+      <section id="results" hidden>
+        <h2>認識結果</h2>
+        <div id="candidates"></div>
+      </section>
 
       <hr />
 

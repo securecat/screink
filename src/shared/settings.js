@@ -2,16 +2,26 @@
  * 設定の既定値と読み書き。
  *
  * ここに保存するのは「設定」だけ。切り出した画像・認識結果・指した位置は
- * 永続化しない（CLAUDE.md「ネットワーク送信を『できない構造』にする」参照）。
+ * 永続化しない（仕様書 §8.2）。
  */
 
 export const DEFAULT_SETTINGS = {
-  /** 切り出し領域の幅（CSSピクセル） */
-  regionWidth: 960,
-  /** 切り出し領域の高さ（CSSピクセル） */
-  regionHeight: 320,
+  /**
+   * QRコード用の切り出し領域の一辺（CSSピクセル）。
+   * QRは縦横比 1:1 なので正方形で切り出す（仕様書 §4.6）。
+   */
+  qrRegionSize: 560,
+
+  /**
+   * OCR用の切り出し領域（CSSピクセル）。URLは横に長く縦に薄いため帯にする。
+   * Phase 1 で使用する。現時点では未使用のため設定画面には出していない。
+   */
+  ocrRegionWidth: 960,
+  ocrRegionHeight: 200,
+
   /** 照準モード中に切り出し領域の枠を表示する */
   showRegionOutline: true,
+
   /**
    * 切り出した画像を、確認を待たず新しいタブで開く（PoC の目視確認用）。
    * 会議中にタブが切り替わるのは邪魔なので既定は off。
@@ -21,8 +31,9 @@ export const DEFAULT_SETTINGS = {
 };
 
 export const SETTING_LIMITS = {
-  regionWidth: { min: 120, max: 4000 },
-  regionHeight: { min: 80, max: 4000 },
+  qrRegionSize: { min: 160, max: 2000 },
+  ocrRegionWidth: { min: 120, max: 4000 },
+  ocrRegionHeight: { min: 80, max: 4000 },
 };
 
 /** 数値設定を範囲内に収める。不正値は既定値へ戻す。 */
@@ -38,8 +49,9 @@ function clampNumber(key, value) {
 export async function getSettings() {
   const stored = await chrome.storage.sync.get(DEFAULT_SETTINGS);
   return {
-    regionWidth: clampNumber('regionWidth', stored.regionWidth),
-    regionHeight: clampNumber('regionHeight', stored.regionHeight),
+    qrRegionSize: clampNumber('qrRegionSize', stored.qrRegionSize),
+    ocrRegionWidth: clampNumber('ocrRegionWidth', stored.ocrRegionWidth),
+    ocrRegionHeight: clampNumber('ocrRegionHeight', stored.ocrRegionHeight),
     showRegionOutline: Boolean(stored.showRegionOutline),
     openCaptureInTab: Boolean(stored.openCaptureInTab),
   };

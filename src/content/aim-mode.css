@@ -131,6 +131,21 @@
 }
 
 /* ------------------------------------------------------------------ *
+ * 見つかったQRコードの位置
+ * 領域枠と区別できるよう、明色レイヤーに強調色を使う。
+ * ------------------------------------------------------------------ */
+.screink-found {
+  display: block !important;
+  position: fixed !important;
+  pointer-events: none !important;
+  background: transparent !important;
+  border: 3px solid var(--screink-focus) !important;
+  box-shadow:
+    0 0 0 2px var(--screink-guide-dark),
+    inset 0 0 0 2px var(--screink-guide-dark) !important;
+}
+
+/* ------------------------------------------------------------------ *
  * ステータスバー（モード中であることの明示）
  * ------------------------------------------------------------------ */
 .screink-bar {
@@ -176,7 +191,7 @@
   left: 50% !important;
   bottom: 24px !important;
   transform: translateX(-50%) !important;
-  width: min(560px, calc(100vw - 32px)) !important;
+  width: min(680px, calc(100vw - 32px)) !important;
   padding: 20px !important;
   background: var(--screink-surface) !important;
   color: var(--screink-text) !important;
@@ -200,12 +215,68 @@
   font-size: 16px !important;
 }
 
+/*
+ * 「どこへ行くのか」を目立たせる。QRコードの中身は作成者が自由に決められるため、
+ * ホスト名を本文より大きく出して、行き先の見落としを減らす。
+ */
+.screink-panel__destination {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 10px !important;
+  margin: 0 0 8px !important;
+}
+
+.screink-panel__label {
+  display: inline-block !important;
+  padding: 2px 8px !important;
+  border: 1px solid var(--screink-ui-border) !important;
+  border-radius: 4px !important;
+  color: var(--screink-text-note) !important;
+  font-size: 16px !important;
+  white-space: nowrap !important;
+}
+
+.screink-panel__host {
+  display: inline-block !important;
+  color: var(--screink-text) !important;
+  font-family: monospace !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  word-break: break-all !important;
+}
+
+/* 読み取った内容そのもの。手で選択してコピーできるようにしておく。 */
+.screink-panel__payload {
+  display: block !important;
+  max-height: 6.4em !important;
+  margin: 0 0 8px !important;
+  overflow-y: auto !important;
+  color: var(--screink-text) !important;
+  font-family: monospace !important;
+  font-size: 16px !important;
+  word-break: break-all !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
 .screink-panel__note {
   display: block !important;
-  margin: 0 0 16px !important;
+  margin: 0 0 8px !important;
   color: var(--screink-text-note) !important;
   font-size: 16px !important;
   font-family: monospace !important;
+}
+
+/* 操作結果のメッセージ。自動では消さない。 */
+.screink-panel__status {
+  display: block !important;
+  margin: 0 0 12px !important;
+  color: var(--screink-text) !important;
+  font-size: 16px !important;
+}
+
+.screink-panel__status:empty {
+  display: none !important;
 }
 
 .screink-panel__actions {
@@ -225,6 +296,17 @@
   font-size: 16px !important;
   font-weight: 700 !important;
   cursor: pointer !important;
+}
+
+/*
+ * 副次的なボタン。暗いサーフェス上に置くため、
+ * 文字色・境界の双方でコントラストを確保する（背景を薄くして誤魔化さない）。
+ */
+.screink-button--secondary {
+  background: var(--screink-surface) !important;
+  color: var(--screink-text) !important;
+  border: 2px solid var(--screink-ui-border) !important;
+  font-weight: 400 !important;
 }
 
 .screink-root :focus-visible {

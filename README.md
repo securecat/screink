@@ -77,6 +77,10 @@ Ordinary clicks are never intercepted. screink only takes over the click while a
 
 screink requests **no host permissions**, so it has no standing access to any site.
 
+## Bundled third-party code
+
+QR codes are decoded by [jsQR](https://github.com/cozmo/jsQR) (Apache License 2.0), which is bundled in `src/vendor/jsqr/` rather than loaded from a CDN — Manifest V3 forbids remote code, and screink declares no external hosts at all. Chrome's built-in `BarcodeDetector` is used instead where it is available; it is not available on Windows.
+
 ## Changelog
 
 Only the latest version is listed here. For the full history, see [CHANGELOG.md](CHANGELOG.md).
@@ -172,6 +176,10 @@ screink は、特定の会議サービスの内部構造に依存しません。
 | `storage` | 設定を保存するため |
 
 screink は**ホスト権限を一切要求しません**。そのため、どのサイトに対しても常時アクセス権を持ちません。
+
+## 同梱しているサードパーティのコード
+
+QRコードのデコードには [jsQR](https://github.com/cozmo/jsQR)（Apache License 2.0）を使用しており、CDNから読み込むのではなく `src/vendor/jsqr/` に同梱しています。Manifest V3 がリモートコードの実行を禁じていることに加え、screink が外部への通信先を一切持たない構成を保つためです。Chrome 標準の `BarcodeDetector` が使える環境ではそちらを使いますが、Windows では利用できません。
 
 ## 更新履歴
 

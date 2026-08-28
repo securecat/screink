@@ -14,39 +14,29 @@
 
       <form id="settings-form">
         <fieldset>
-          <legend>切り出す範囲</legend>
+          <legend>QRコードを探す範囲</legend>
 
           <p class="note">
-            指定した位置を中心に、この大きさの範囲を切り出して読み取ります。単位はCSSピクセルです。URLは横に長く縦に薄いため、横に広い範囲のほうが適しています。
+            指定した位置を中心に、この大きさの正方形を切り出して読み取ります。単位はCSSピクセルです。QRコードは縦横比が 1:1 なので正方形で切り出します。
           </p>
 
           <div class="field">
-            <label for="region-width">幅</label>
+            <label for="qr-region-size">一辺の長さ</label>
             <input
               type="number"
-              id="region-width"
-              name="regionWidth"
-              min="120"
-              max="4000"
-              step="10"
+              id="qr-region-size"
+              name="qrRegionSize"
+              min="160"
+              max="2000"
+              step="20"
               inputmode="numeric"
             />
             <span class="unit">px</span>
           </div>
 
-          <div class="field">
-            <label for="region-height">高さ</label>
-            <input
-              type="number"
-              id="region-height"
-              name="regionHeight"
-              min="80"
-              max="4000"
-              step="10"
-              inputmode="numeric"
-            />
-            <span class="unit">px</span>
-          </div>
+          <p class="note">
+            この範囲で見つからなかった場合は、自動で2倍の範囲まで広げて再試行します。大きく表示されたQRコードが枠に収まらないときの対策です。
+          </p>
         </fieldset>
 
         <fieldset>

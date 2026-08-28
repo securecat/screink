@@ -60,10 +60,16 @@ CHROME_EXTENSION.md の規定構成に、このプロジェクト固有のもの
 │   ├── debug/        # PoC の目視確認用の拡張ページ
 │   ├── options/
 │   ├── popup/
-│   └── shared/       # 設定の既定値・拡張ページ共通CSS
+│   ├── shared/       # 設定の既定値・URL検証・拡張ページ共通CSS
+│   └── vendor/       # 同梱ライブラリ（jsQR）
 ├── promotion/
 └── work/             # gitignore 済み。仕様書・PoC の実験・テスト素材置き場
 ```
+
+同梱ライブラリを追加・更新するときは `src/vendor/<name>/README.md` に
+バージョン・取得元・ライセンス・sha256・更新手順を記録すること。
+**upstream の配布ファイルは1バイトも変更しない**（差し替えを機械的に行えるようにするため）。
+ES モジュールとして使うためのラッパーが必要なら、別ファイルに分けて置く。
 
 ---
 
@@ -109,14 +115,31 @@ CHROME_EXTENSION.md の規定構成に、このプロジェクト固有のもの
 Shadow DOM は使っていない。`insertCSS` は Shadow DOM の中へ届かないため、
 `all: initial` によるリセットとクラス名の接頭辞（`screink-`）でページ側スタイルの影響を抑えている。
 
+### 危険なURLを開かせない（仕様書 §5.2・§6.1）
+
+- [ ] 認識結果を URL として扱う前に `src/shared/url.js` の `toSafeUrl()` を通している
+- [ ] `toSafeUrl()` の許可スキームに `http:` / `https:` 以外を足していない
+- [ ] タブを開く直前に service worker 側でも再検証している
+      （content script から渡された文字列を信用しない）
+
 ### 検証（仕様書 §17）
 
 - [ ] 各フェーズの完了時に、実機（実際の Chrome）での動作確認をしている
-- [ ] 座標に関わる変更をしたら、デバイス倍率 1 / 1.5 / 2 で E2E スモークテスト（`work/e2e/`）を通している
+- [ ] 座標や認識に関わる変更をしたら、デバイス倍率 1 / 1.5 / 2 で E2E スモークテストを通している
 
 ```
-node --experimental-websocket --no-warnings work/e2e/run.mjs [倍率]
+node --experimental-websocket --no-warnings work/e2e/run.mjs    [倍率]  # 照準モードと座標変換
+node --experimental-websocket --no-warnings work/e2e/run-qr.mjs [倍率]  # QR認識と確認UI
 ```
 
-Chrome 151 では `--load-extension` が機能しないため、このテストは CDP の
+その他の計測用スクリプト：
+
+```
+node --experimental-websocket --no-warnings work/e2e/qr-size-sweep.mjs  [倍率]  # 読める最小サイズ
+node --experimental-websocket --no-warnings work/e2e/probe-barcode.mjs  [headful]  # BarcodeDetector の可否
+```
+
+Chrome 151 では `--load-extension` が機能しないため、これらは CDP の
 `Extensions.loadUnpacked`（`--enable-unsafe-extension-debugging` が必要）で拡張を読み込んでいる。
+また、読み込み直後は service worker に拡張APIのバインディングがまだ入っていないため、
+`chrome.tabs` が使えるようになるまで待ってから操作すること（ハーネス側で対応済み）。

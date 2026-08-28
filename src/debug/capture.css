@@ -21,11 +21,18 @@ figure {
   margin: 20px 0;
 }
 
+/* 画像とマーカーを重ねる土台 */
+.stage {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
 /*
  * 画像の縁は「その画像がどこまでか」を示す UI 的な境界なので、
  * 装飾用の --divider ではなく --ui-border を使う。
  */
-#image {
+.crop {
   display: block;
   max-width: 100%;
   height: auto;
@@ -34,11 +41,84 @@ figure {
   border-radius: 6px;
 }
 
+/*
+ * マーカーは任意の画像内容の上に重なる。背景が何色でも見えるように、
+ * 明色と暗色の二重描画でコントラストを確保する（opacity は使わない）。
+ */
+.marker {
+  position: absolute;
+  pointer-events: none;
+}
+
+.marker--point {
+  width: 15px;
+  height: 15px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px #11162b,
+    inset 0 0 0 2px #11162b;
+}
+
+.marker--box {
+  border: 2px solid #ffffff;
+  box-shadow:
+    0 0 0 2px #11162b,
+    inset 0 0 0 2px #11162b;
+}
+
+.marker--chosen {
+  border-color: #ffd24a;
+}
+
+.marker__label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1px 7px;
+  background: #11162b;
+  color: #f5f6fa;
+  font-family: monospace;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px #f5f6fa;
+}
+
 figcaption {
   margin: 12px 0 0;
   color: var(--text-note);
   white-space: pre;
   overflow-x: auto;
+}
+
+.candidates {
+  margin: 0;
+  padding-left: 24px;
+}
+
+.candidate {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+}
+
+/* 選択された候補は、色だけでなく境界の太さでも区別する */
+.candidate--chosen {
+  border: 3px solid var(--ui-border);
+}
+
+.candidate__heading {
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.candidate__payload {
+  margin: 0 0 8px;
+  word-break: break-all;
+  user-select: text;
 }
 
 ul {
