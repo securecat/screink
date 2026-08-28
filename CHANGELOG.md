@@ -5,6 +5,30 @@ All notable changes to screink are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-08-28
+
+QR codes now work end to end: point at one and open the URL it carries.
+URLs shown as text still need OCR, which is not built yet.
+
+### Added
+
+- QR code decoding. Point at a QR code and screink reads it, shows what it found, and opens it in a new tab on confirmation.
+- Confirmation panel that leads with the destination host, so you can see where a code is about to send you before you go there.
+- Copying the decoded content, for codes that carry text rather than a URL.
+- Debug page now draws the position you pointed at and the outline of every code it decoded on top of the captured image.
+- Setting for the size of the area searched for QR codes.
+
+### Changed
+
+- The search area now widens progressively — a quarter, a half, one and two times the configured size — and stops at the first code it reads. Scanning a wide area first loses codes, because the decoder returns nothing at all when several codes share one image. Starting narrow also matches what you meant: the code you pointed at.
+- A decoded code only counts as the one you pointed at if your position falls inside it, or within one code-size of its centre. Widening the search no longer picks up a code on the far side of the screen.
+- The crop is a square sized for QR codes, replacing the separate width and height settings. The band shape suited to URL text returns with OCR.
+
+### Security
+
+- Only `http` and `https` are ever opened. A QR code carrying `javascript:`, `data:`, `chrome://` or `file://` is shown as plain text with no open button.
+- The URL is validated again in the service worker immediately before the tab is created, rather than trusting what the page-side script passed along.
+
 ## [0.1.0] - 2026-08-28
 
 First proof-of-concept release. Aiming and screen capture work; recognising
@@ -27,6 +51,29 @@ screink のすべての重要な変更点をこのファイルに記載します
 
 形式は [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) に基づき、
 バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
+
+## [0.2.0] - 2026-08-28
+
+QRコードが端から端まで動くようになりました。指せば、そのURLが開けます。文字として表示されたURLはOCRが必要で、そちらはまだありません。
+
+### 追加
+
+- QRコードのデコード。QRコードを指すと screink がそれを読み取り、内容を提示し、確認のうえ新しいタブで開きます。
+- 開く先のホスト名を先頭に大きく出す確認パネル。そのコードがどこへ連れて行こうとしているのかを、行く前に確認できます。
+- 読み取った内容のコピー。URLではなくテキストを持つコードのためのものです。
+- デバッグ画面が、切り出した画像の上に、指した位置と読み取ったすべてのコードの枠を重ねて表示するようになりました。
+- QRコードを探す範囲の大きさを変える設定。
+
+### 変更
+
+- 探す範囲を、設定値の 1/4・1/2・等倍・2倍と段階的に広げ、最初に読めたところで止めるようにしました。広い範囲から探すとかえって読めません。デコーダは1枚の画像に複数のコードが写っていると1つも返さないためです。狭い範囲から始めることは「指したコードを読む」という意図にも一致します。
+- 読み取ったコードを「指したもの」と見なす条件を、指した位置がその中にあるか、中心から1コード分以内にあること、としました。範囲を広げても、画面の反対側にあるコードを拾わなくなります。
+- 切り出しを、QRコードに合わせた正方形にしました（幅と高さの個別設定を置き換え）。URLの文字列に適した横長の帯は、OCRとともに戻ってきます。
+
+### セキュリティ
+
+- 開くのは `http` と `https` だけです。`javascript:` `data:` `chrome://` `file://` を持つQRコードは、テキストとして提示するだけで開くボタンを出しません。
+- タブを作る直前に、service worker 側でURLをもう一度検証します。ページ側のスクリプトから渡された内容を信用しません。
 
 ## [0.1.0] - 2026-08-28
 
