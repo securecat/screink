@@ -5,6 +5,17 @@ All notable changes to screink are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-08-28
+
+### Fixed
+
+- A QR code sitting close to another one could not be read at all. The search started from an area wide enough to catch the neighbour, and the decoder returns nothing when two codes share an image. It now starts much smaller and grows in finer steps, so there is a step where only the code you pointed at is in frame. Two 80-pixel codes 5 pixels apart went from unreadable to read in 35ms.
+- Codes with no white margin around them, including ones running right up against the edge of the screen, are now given one before decoding. The QR standard requires that margin and real slides often lack it, and cropping in close removes whatever margin there was.
+
+### Changed
+
+- Crops wider than 1200 device pixels are scaled down before decoding, which keeps the finer search from costing time. Waiting for a search that finds nothing dropped from about 1.5 seconds to about 1 second on a high-DPI display. The smallest readable code is unchanged at 48 device pixels.
+
 ## [0.2.0] - 2026-08-28
 
 QR codes now work end to end: point at one and open the URL it carries.
@@ -51,6 +62,17 @@ screink のすべての重要な変更点をこのファイルに記載します
 
 形式は [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) に基づき、
 バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
+
+## [0.2.1] - 2026-08-28
+
+### 修正
+
+- 別のQRコードが近くにあると、まったく読めないことがありました。探す範囲が、最初から隣のコードを巻き込むほど広かったためです。デコーダは1枚の画像に2つ写っていると1つも返しません。もっと狭いところから、細かい刻みで広げるようにしたので、指したコードだけが写る段階が必ず現れます。一辺80px・間隔5px の2つは、読めない状態から 35ms で読めるようになりました。
+- 周囲に白い余白が無いQRコード（画面の端にぴったり接しているものを含む）に、読み取る前に余白を足すようにしました。規格はこの余白を要求していますが実際のスライドには無いことが多く、狭く切り出すと残っていた余白も削られてしまうためです。
+
+### 変更
+
+- 一辺が1200デバイスピクセルを超える切り出しは、読み取る前に縮小するようにしました。探索を細かくした分の時間を相殺します。見つからなかったときの待ち時間が、高DPIの画面で約1.5秒から約1秒になりました。読み取れる最小サイズは48デバイスピクセルのまま変わりません。
 
 ## [0.2.0] - 2026-08-28
 
