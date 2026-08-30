@@ -149,7 +149,12 @@
   box-shadow: 0 0 0 2px var(--screink-ui-border) !important;
 }
 
+/*
+ * 色は必ず指定する。`all: initial` のリセットは色も初期値（黒）に戻すため、
+ * 指定を省くと暗いサーフェスの上で黒文字になり、見えなくなる。
+ */
 .screink-bar__name {
+  color: var(--screink-text) !important;
   font-weight: 700 !important;
 }
 

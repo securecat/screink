@@ -124,6 +124,10 @@ ES モジュールとして使うためのラッパーが必要なら、別フ�
 - [ ] 切り出した画像の表示を拡張ページ（`src/debug/`）で行っている
       （ページ内オーバーレイにはテキストのみ）
 
+**`all: initial`（オーバーレイのリセット）は色も初期値の黒に戻す。**
+色を指定し忘れると、暗いサーフェスの上で黒文字になり見えなくなる。
+実際に `.screink-bar__name` でこれが起きた。UI に手を入れたら `check-contrast.mjs` を通すこと。
+
 Shadow DOM は使っていない。`insertCSS` は Shadow DOM の中へ届かないため、
 `all: initial` によるリセットとクラス名の接頭辞（`screink-`）でページ側スタイルの影響を抑えている。
 
@@ -147,6 +151,7 @@ node --experimental-websocket --no-warnings work/e2e/run-qr.mjs [倍率]  # QR�
 その他の計測用スクリプト：
 
 ```
+node --experimental-websocket --no-warnings work/e2e/check-contrast.mjs [言語]  # コントラスト比
 node --experimental-websocket --no-warnings work/e2e/qr-size-sweep.mjs  [倍率]  # 読める最小サイズ
 node --experimental-websocket --no-warnings work/e2e/probe-barcode.mjs  [headful]  # BarcodeDetector の可否
 ```
