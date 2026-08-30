@@ -74,6 +74,17 @@
   let recognition = null;
   let candidateIndex = 0;
 
+  /**
+   * いま示している「見つかった位置」と、画面を撮ったときのページのスクロール量。
+   *
+   * 位置はキャプチャした時点のビューポート基準（CSSピクセル）で得られる。
+   * オーバーレイは position: fixed なので、そのまま置くとページをスクロールしても
+   * 枠だけ画面に貼り付いたまま残り、指したQRコードから離れてしまう。
+   * 撮ったときとの差分だけ戻して、ページの内容と一緒に動いているように見せる。
+   */
+  let foundBox = null;
+  let scrollAtCapture = { x: 0, y: 0 };
+
   /* ---------------------------------------------------------------- *
    * DOM の組み立て
    * ---------------------------------------------------------------- */
@@ -306,15 +317,41 @@
   function renderFoundBox(bboxCss) {
     if (!ui) return;
     placePanel(bboxCss);
-    if (!bboxCss) {
+    foundBox = bboxCss ?? null;
+    positionFoundBox();
+  }
+
+  /**
+   * 「見つかった位置」の枠を、いまのスクロール量に合わせて置き直す。
+   *
+   * 指したQRコードはページの内容の中にあるので、ページがスクロールすれば
+   * 一緒に動く。枠もそれに追従させる（パネルは画面に固定したままでよい）。
+   *
+   * ページ自体がスクロールしない作りの場合（会議サービスの多くがそう）は
+   * 差分が 0 のままなので、何も起きない。
+   */
+  function positionFoundBox() {
+    if (!ui) return;
+    if (!foundBox) {
       ui.found.hidden = true;
       return;
     }
-    ui.found.style.left = `${bboxCss.x}px`;
-    ui.found.style.top = `${bboxCss.y}px`;
-    ui.found.style.width = `${bboxCss.width}px`;
-    ui.found.style.height = `${bboxCss.height}px`;
-    ui.found.hidden = false;
+
+    const left = foundBox.x - (window.scrollX - scrollAtCapture.x);
+    const top = foundBox.y - (window.scrollY - scrollAtCapture.y);
+
+    ui.found.style.left = `${left}px`;
+    ui.found.style.top = `${top}px`;
+    ui.found.style.width = `${foundBox.width}px`;
+    ui.found.style.height = `${foundBox.height}px`;
+
+    // 画面の外へ出たら消す。端に貼り付いた枠が残らないように
+    const outside =
+      left + foundBox.width < 0 ||
+      top + foundBox.height < 0 ||
+      left > window.innerWidth ||
+      top > window.innerHeight;
+    ui.found.hidden = outside;
   }
 
   /* ---------------------------------------------------------------- *
@@ -377,6 +414,8 @@
     const point = { x: pointer.x, y: pointer.y };
     const regions = regionsToTry();
     const dpr = window.devicePixelRatio || 1;
+    // 見つかった位置をあとでスクロールに追従させるため、撮る時点の値を控える
+    scrollAtCapture = { x: window.scrollX, y: window.scrollY };
 
     // captureVisibleTab は自分のオーバーレイも一緒に写す。撮る前に隠す。
     ui.root.classList.add('screink-root--capturing');
@@ -412,6 +451,8 @@
 
   function expandAiming() {
     ui.panel.hidden = true;
+    // 枠は消す。残しておくとスクロールのたびに置き直されて復活してしまう
+    foundBox = null;
     ui.found.hidden = true;
     ui.catcher.hidden = false;
     ui.crossV.hidden = false;
@@ -703,6 +744,12 @@
 
   function onViewportChange() {
     if (state === 'aiming') setPointer(pointer.x, pointer.y);
+    positionFoundBox();
+  }
+
+  /** ページがスクロールしたら、見つかった位置の枠だけ内容に合わせて動かす。 */
+  function onPageScroll() {
+    positionFoundBox();
   }
 
   const listeners = [];
@@ -760,6 +807,7 @@
     on(ui.closeButton, 'click', exit);
     on(window, 'keydown', onKeyDown, true);
     on(window, 'resize', onViewportChange);
+    on(window, 'scroll', onPageScroll, { passive: true });
     on(document, 'fullscreenchange', remount);
 
     ui.catcher.focus({ preventScroll: true });
@@ -775,6 +823,7 @@
     ui = null;
     recognition = null;
     candidateIndex = 0;
+    foundBox = null;
 
     if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
       try {
