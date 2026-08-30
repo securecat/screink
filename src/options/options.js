@@ -17,26 +17,23 @@ const checkboxFields = {
   openCaptureInTab: document.querySelector('#open-capture-in-tab'),
 };
 
-/**
- * ステータスメッセージを出したきっかけの要素。
- * ユーザーの注視が別のコントロールへ移ったことが明白になった時点で消す。
- * 時間経過による自動消去はしない。
- */
-let statusOwner = null;
-
-function setStatus(message, owner = null) {
-  statusText.textContent = message;
-  statusOwner = owner;
-}
-
 function populate(settings) {
   checkboxFields.openCaptureInTab.checked = settings.openCaptureInTab;
 }
 
+/*
+ * 保存できたことの表示は消さず、次の操作の結果で置き換える。
+ *
+ * 以前はフォーカスが他のコントロールへ移った時点で消していたが、
+ * 消すこと自体がレイアウトを動かし、直後のボタンを押そうとした瞬間に
+ * 位置がずれて押せない、という不具合になっていた。
+ * 表示はラベルと同じ行に置いてあり、残っていても邪魔にならないうえ、
+ * 現在の状態を正しく述べているので、消す理由がない。
+ */
 for (const [key, input] of Object.entries(checkboxFields)) {
   input.addEventListener('change', async () => {
     await saveSetting(key, input.checked);
-    setStatus(t(input.checked ? 'optionsSavedOn' : 'optionsSavedOff'), input);
+    statusText.textContent = t(input.checked ? 'optionsSavedOn' : 'optionsSavedOff');
   });
 }
 
@@ -45,9 +42,5 @@ shortcutsButton.addEventListener('click', async () => {
   await chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
 });
 
-// 注視が別のコントロールへ移った時点でステータスを消す
-document.addEventListener('focusin', (event) => {
-  if (statusOwner && event.target !== statusOwner) setStatus('');
-});
 
 populate(await getSettings().catch(() => ({ ...DEFAULT_SETTINGS })));

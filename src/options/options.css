@@ -25,6 +25,17 @@ h2 {
   margin: 0 0 12px;
 }
 
+/*
+ * 保存できたことの表示。ラベルと同じ行に置くので、
+ * 出ても消えても以降のレイアウトが動かない。
+ * 色だけに意味を持たせない（文言そのものが結果を伝えている）。
+ */
+.save-status {
+  color: var(--text-success);
+  font-size: 16px;
+  white-space: nowrap;
+}
+
 ul {
   margin: 0 0 12px;
   padding-left: 24px;

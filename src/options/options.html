@@ -20,14 +20,18 @@
         loses nothing. Keep it off if you would rather not have tabs switch during a meeting.
       </p>
 
+      <!--
+        保存できたことの表示は、操作したその場（ラベルの直後）に出す。
+        下に置くと、出たり消えたりするたびに以降の内容が動く。
+        直後のボタンを押そうとした瞬間に位置がずれて押せない、という不具合になっていた。
+      -->
       <div class="field field--check">
         <input type="checkbox" id="open-capture-in-tab" name="openCaptureInTab" />
         <label for="open-capture-in-tab" data-i18n="optionsAutoOpenLabel">
           Open the captured image in a new tab every time
         </label>
+        <span class="save-status" id="status" role="status"></span>
       </div>
-
-      <p class="status" id="status" role="status"></p>
 
       <h2 data-i18n="optionsShortcutHeading">Keyboard shortcut</h2>
 
