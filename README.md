@@ -50,16 +50,26 @@ QR codes are decoded by [jsQR](https://github.com/cozmo/jsQR) (Apache License 2.
 
 ## Changelog
 
-### [0.2.2] - 2026-08-30
+### [0.3.0] - 2026-08-31
 
-#### Fixed
+#### Added
 
-- Pointing anywhere on a QR code now reads it. Until now it had to be pointed at near its centre, which was easy to miss when codes of different sizes sat side by side. The crop was a square centred on where you pointed: off-centre, it had to grow to reach the far edge of the code, while the size that still excluded the neighbouring code shrank, and sometimes nothing fitted in between. The crop now follows the code itself — the area around your position is scanned for a block of mixed light and dark pixels, which is what a QR code looks like and a margin or a flat panel does not, and the outline of the one under your position is what gets read. Sweeping across three codes of different sizes, readable positions went from 15 of 35 to 32 of 35; the three that remain are points where there is no code.
-- The marker showing where you pointed on the debug page was offset by the width of the white border added in 0.2.1.
+- English, alongside Japanese. Everything follows the language your browser is set to: the name in the toolbar, the options page, and the panel that shows what was read. In Japanese the extension is called スクリーンク.
 
 #### Changed
 
-- Reading is faster, 164–223ms down to 90–119ms on the same sample, because it usually decodes once rather than trying a series of sizes.
+- New toolbar icons.
+- Aim mode shows a crosshair and nothing else. The square frame said "the code has to be inside this box", which stopped being true in 0.2.2, when cropping started following the code you point at instead of the point itself. A code outside the frame read fine; one inside it did not read unless you pointed at it.
+- The panel showing what was read moves to whichever half of the screen the code is not in, so it never covers the thing it just read.
+- No keyboard shortcut is claimed on install. Nothing is bound and no key combination is held until you assign one yourself, from the options page. An extension cannot release a shortcut once Chrome has given it one — only you can — so it seemed wrong for a tool reached for now and then to hold a key whether or not anyone used it.
+- Settings stay on the device instead of syncing through a Google account. It is one on/off preference, not worth qualifying "nothing leaves your browser" over.
+- The popup drops its opening paragraph. The options page drops the search-area setting, which now only feeds a fallback, and the restore-defaults button, which restored a single checkbox.
+
+#### Fixed
+
+- The words naming aim mode in the bar at the top were black on a near-black background, so the bar read as an empty dark strip.
+- The options page moved under the pointer. Turning the setting on printed a line below it that pushed the button beneath it down; moving to that button erased the line and pulled the button back up as it was being clicked, so it could not be pressed.
+- The keyboard shortcut shown was the one the extension had asked for, not the one actually in effect. Chrome refuses the request when the combination is already taken, and you can rebind it at any time, so the displayed key could simply be wrong.
 
 For the full history, see [CHANGELOG.md](CHANGELOG.md).
 
@@ -117,15 +127,25 @@ QRコードのデコードには[jsQR](https://github.com/cozmo/jsQR)（Apache L
 
 ## 更新履歴
 
-### [0.2.2] - 2026-08-30
+### [0.3.0] - 2026-08-31
 
-#### 修正
+#### 追加
 
-- QRコードの上ならどこを指しても読めるようになりました。これまでは中心の近くを指す必要があり、大きさの異なるコードが並んでいると外しやすい状態でした。切り出しが「指した点を中心とする正方形」だったためです。中心からずれるほど、コード全体を覆うには大きな正方形が必要になり、一方で隣のコードを巻き込まない上限は小さくなるので、その間に収まる大きさが無くなることがありました。切り出しをコード自体に合わせるようにしました。指した位置の周りから、明暗が混在するかたまり（QRコードはそう見えます。余白や単色の面はそう見えません）を探し、指した位置にあるものの輪郭を読み取ります。大きさの異なる3つのコードを横切って調べたところ、読める位置が35箇所中15箇所から32箇所になりました。残る3箇所はコードが無い場所です。
-- 目視確認画面で、指した位置を示すマーカーが、0.2.1 で足した白い縁の分だけずれていました。
+- 日本語に加えて英語に対応しました。ツールバーに出る名前も、オプション設定も、読み取った内容を出すパネルも、ブラウザの表示言語に従います。日本語での名前は「スクリーンク」です。
 
 #### 変更
 
-- 読み取りが速くなりました。同じサンプルで 164〜223ms から 90〜119ms へ。多くの場合、複数の大きさを順に試さずに一度で読み取れるためです。
+- ツールバーのアイコンを新しくしました。
+- 照準モードの表示を十字だけにしました。四角い枠は「この中にコードが入っていないといけない」という意味でしたが、0.2.2 で切り出しが「指した点」ではなく「指したコード」に従うようになった時点で、実態と合わなくなっていました。枠の外にあるコードも読めますし、枠の中にあっても指していなければ読みません。
+- 読み取った内容を出すパネルが、コードのある側とは反対の半分に出るようになりました。読み取ったものをパネル自身が隠すことがなくなります。
+- インストール時にショートカットキーを確保しないようにしました。オプション設定から自分で割り当てるまで、何も割り当てられず、キーの組み合わせも押さえません。Chrome がいったん割り当てたショートカットを拡張の側から外す手段は無く、外せるのはユーザーだけです。ときどき使う道具が、使う使わないに関わらずキーを握り続けるのは筋が通らないと考えました。
+- 設定を Google アカウント経由で同期せず、端末内に保存するようにしました。オン・オフの設定ひとつのために「ブラウザの外に出ない」という説明に但し書きを付けるのは割に合わないためです。
+- ポップアップの冒頭の説明文を削除しました。オプション設定からは、いまや保険の処理にしか効かない「探す範囲」の設定と、チェックボックス1つを戻すだけだった「既定値に戻す」ボタンを削除しました。
+
+#### 修正
+
+- 画面上部のバーに出る照準モードの名前が、ほぼ黒の背景に黒文字で描かれていて、バーが黒い帯にしか見えていませんでした。
+- オプション設定で、操作するとページの内容が動いていました。設定をオンにすると下に一行表示され、その下のボタンが押し下げられます。そのボタンへ移ろうとすると表示が消えてボタンが元の位置に戻るため、押そうとした瞬間にずれて押せませんでした。
+- ショートカットキーの表示が、実際に有効な割り当てではなく、拡張が希望したキーになっていました。希望したキーは、他と重なっていれば Chrome に断られますし、ユーザーが変更することもあるため、表示が実態と違うことがありました。
 
 全履歴は [CHANGELOG.md](CHANGELOG.md) を参照してください。
