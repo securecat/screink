@@ -50,26 +50,21 @@ QR codes are decoded by [jsQR](https://github.com/cozmo/jsQR) (Apache License 2.
 
 ## Changelog
 
-### [0.3.0] - 2026-08-31
+### [0.4.0] - 2026-08-31
 
 #### Added
 
-- English, alongside Japanese. Everything follows the language your browser is set to: the name in the toolbar, the options page, and the panel that shows what was read. In Japanese the extension is called スクリーンク.
+- A language setting on the options page. Pick English or Japanese and screink stays in it, whatever language the browser is set to; until you pick, it follows the browser as before. The extension's name, its description and the shortcut description are the exception — Chrome resolves those from the browser's language and an extension cannot override them.
 
 #### Changed
 
-- New toolbar icons.
-- Aim mode shows a crosshair and nothing else. The square frame said "the code has to be inside this box", which stopped being true in 0.2.2, when cropping started following the code you point at instead of the point itself. A code outside the frame read fine; one inside it did not read unless you pointed at it.
-- The panel showing what was read moves to whichever half of the screen the code is not in, so it never covers the thing it just read.
-- No keyboard shortcut is claimed on install. Nothing is bound and no key combination is held until you assign one yourself, from the options page. An extension cannot release a shortcut once Chrome has given it one — only you can — so it seemed wrong for a tool reached for now and then to hold a key whether or not anyone used it.
-- Settings stay on the device instead of syncing through a Google account. It is one on/off preference, not worth qualifying "nothing leaves your browser" over.
-- The popup drops its opening paragraph. The options page drops the search-area setting, which now only feeds a fallback, and the restore-defaults button, which restored a single checkbox.
+- The toolbar icon and the keyboard shortcut now only start aim mode. Leaving is `Esc` and nothing else. Both used to toggle, so pressing "Enter aim mode" while the panel from the last read was open just closed the panel — a button that did not do what it said. Starting now folds away whatever is on screen and begins a fresh aim.
+- Messages saying a setting was saved clear as soon as you touch another control. They used to sit until the page lost focus, so a message could linger beside a setting you had stopped thinking about.
 
 #### Fixed
 
-- The words naming aim mode in the bar at the top were black on a near-black background, so the bar read as an empty dark strip.
-- The options page moved under the pointer. Turning the setting on printed a line below it that pushed the button beneath it down; moving to that button erased the line and pulled the button back up as it was being clicked, so it could not be pressed.
-- The keyboard shortcut shown was the one the extension had asked for, not the one actually in effect. Chrome refuses the request when the combination is already taken, and you can rebind it at any time, so the displayed key could simply be wrong.
+- The message after a language change read "Saved." either way, leaving its colour to say which language had been chosen. It now names the language.
+- The Japanese radio label sat right up against the message beside it.
 
 For the full history, see [CHANGELOG.md](CHANGELOG.md).
 
@@ -127,25 +122,20 @@ QRコードのデコードには[jsQR](https://github.com/cozmo/jsQR)（Apache L
 
 ## 更新履歴
 
-### [0.3.0] - 2026-08-31
+### [0.4.0] - 2026-08-31
 
 #### 追加
 
-- 日本語に加えて英語に対応しました。ツールバーに出る名前も、オプション設定も、読み取った内容を出すパネルも、ブラウザの表示言語に従います。日本語での名前は「スクリーンク」です。
+- オプション設定に表示言語の設定を追加しました。英語か日本語かを選ぶと、ブラウザの表示言語に関わらずその言語で表示します。選ぶまでは、これまでどおりブラウザの表示言語に従います。拡張の名前・説明・ショートカットキーの説明だけは例外で、これらは Chrome がブラウザの表示言語で解決するため、拡張の側からは切り替えられません。
 
 #### 変更
 
-- ツールバーのアイコンを新しくしました。
-- 照準モードの表示を十字だけにしました。四角い枠は「この中にコードが入っていないといけない」という意味でしたが、0.2.2 で切り出しが「指した点」ではなく「指したコード」に従うようになった時点で、実態と合わなくなっていました。枠の外にあるコードも読めますし、枠の中にあっても指していなければ読みません。
-- 読み取った内容を出すパネルが、コードのある側とは反対の半分に出るようになりました。読み取ったものをパネル自身が隠すことがなくなります。
-- インストール時にショートカットキーを確保しないようにしました。オプション設定から自分で割り当てるまで、何も割り当てられず、キーの組み合わせも押さえません。Chrome がいったん割り当てたショートカットを拡張の側から外す手段は無く、外せるのはユーザーだけです。ときどき使う道具が、使う使わないに関わらずキーを握り続けるのは筋が通らないと考えました。
-- 設定を Google アカウント経由で同期せず、端末内に保存するようにしました。オン・オフの設定ひとつのために「ブラウザの外に出ない」という説明に但し書きを付けるのは割に合わないためです。
-- ポップアップの冒頭の説明文を削除しました。オプション設定からは、いまや保険の処理にしか効かない「探す範囲」の設定と、チェックボックス1つを戻すだけだった「既定値に戻す」ボタンを削除しました。
+- ツールバーのアイコンとショートカットキーは、照準モードの開始だけを行うようにしました。解除は `Esc` だけです。どちらもトグルだったため、読み取り結果のパネルが出ている状態で「照準モードを開始」を押しても、パネルが閉じるだけで照準モードに入りませんでした。ボタンに書いてあることと違う動きになっていたわけです。いまは、何が出ていてもいったん畳んで、新しい照準モードが始まります。
+- 設定を保存したことを伝える表示が、別のコントロールに触れた時点で消えるようになりました。これまではページから離れるまで残っていたため、もう見ていない設定の横に表示が残り続けることがありました。
 
 #### 修正
 
-- 画面上部のバーに出る照準モードの名前が、ほぼ黒の背景に黒文字で描かれていて、バーが黒い帯にしか見えていませんでした。
-- オプション設定で、操作するとページの内容が動いていました。設定をオンにすると下に一行表示され、その下のボタンが押し下げられます。そのボタンへ移ろうとすると表示が消えてボタンが元の位置に戻るため、押そうとした瞬間にずれて押せませんでした。
-- ショートカットキーの表示が、実際に有効な割り当てではなく、拡張が希望したキーになっていました。希望したキーは、他と重なっていれば Chrome に断られますし、ユーザーが変更することもあるため、表示が実態と違うことがありました。
+- 表示言語を変えたときの表示が、どちらを選んでも「保存しました。」だけで、どちらにしたのかを色だけが伝えている状態でした。選んだ言語を文言に含めるようにしました。
+- 日本語のラジオボタンのラベルが、その隣の表示にくっつきすぎていました。
 
 全履歴は [CHANGELOG.md](CHANGELOG.md) を参照してください。
