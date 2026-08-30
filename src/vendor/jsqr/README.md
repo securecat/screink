@@ -16,10 +16,18 @@ QRコードのデコードに使用している同梱ライブラリ。
 - Manifest V3 はリモートコードの実行を禁止しているため、CDN からの読み込みができない
 - screink は外部への通信先を一切持たない構成（拡張ページの CSP に `connect-src 'none'`）を維持している
 
-Chrome 標準の `BarcodeDetector` を使えれば同梱は不要だが、**Windows デスクトップの Chrome 151 では
-未サポート**であることを実測で確認している（`work/e2e/probe-barcode.mjs`。headless / headful、
+## なぜ `BarcodeDetector` を使わないか
+
+**すべての環境で jsQR を使う。標準 API へのフォールバックは実装していない。**
+
+Chrome 標準の `BarcodeDetector` は、**Windows デスクトップの Chrome 151 では未サポート**である
+ことを実測で確認している（`work/e2e/probe-barcode.mjs`。headless / headful、
 window / service worker のすべてで `'BarcodeDetector' in self === false`）。
-そのため、利用可能なら標準 API を使い、無ければこのライブラリへフォールバックする構成にしている。
+
+使える環境でだけ標準 API に切り替えると、環境によって読み取りの挙動が変わる。
+特に、切り出しを狭い方から広げる探索は「jsQR は画像内に複数コードがあると1つも返さない」
+という性質に合わせて設計してあり（仕様書 §4.6）、複数コードを返せる `BarcodeDetector` では
+前提が変わる。検証できない分岐を持つより、1つのエンジンに揃える。
 
 ## ファイル
 
