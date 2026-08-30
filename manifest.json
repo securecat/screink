@@ -35,9 +35,6 @@
   ],
   "commands": {
     "toggle-aim-mode": {
-      "suggested_key": {
-        "default": "Alt+Shift+S"
-      },
       "description": "__MSG_commandToggleAimMode__"
     }
   },

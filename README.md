@@ -28,7 +28,7 @@ screink does not depend on the internals of any particular meeting service. The 
 ## How to use
 
 1. Open the page where the screen is being shared
-2. Click the screink toolbar icon, or press the keyboard shortcut (`Alt` + `Shift` + `S` by default), to enter aim mode
+2. Click the screink toolbar icon to enter aim mode (you can assign a keyboard shortcut for this from the options page)
 3. Point at the QR code
    - Click it, or
    - Move the crosshair with the arrow keys and press `Enter`
@@ -95,7 +95,7 @@ TeamsやGoogle Meet、Zoomなどをブラウザで使っているとき、参加
 ## 使い方
 
 1. 画面共有が表示されているページを開く
-2. スクリーンクのツールバーアイコンをクリック、またはショートカットキー（デフォルトは `Alt` + `Shift` + `S` ）を押して照準モードに入る
+2. スクリーンクのツールバーアイコンをクリックして照準モードに入る（ショートカットキーはオプション設定から割り当てられます）
 3. QRコードが写っている場所を指す
    - クリックする、または
    - 矢印キーで照準を動かして `Enter` を押す

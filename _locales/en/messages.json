@@ -12,7 +12,7 @@
     "placeholders": { "1": { "content": "$1" } }
   },
   "popupShortcutNone": {
-    "message": "No keyboard shortcut is assigned. You can set one from the settings."
+    "message": "You can assign a keyboard shortcut of your choosing for entering and leaving aim mode."
   },
   "popupOpenOptions": { "message": "Options" },
   "popupStarting": { "message": "Entering aim mode…" },
@@ -51,7 +51,7 @@
     "placeholders": { "1": { "content": "$1" } }
   },
   "optionsShortcutNone": {
-    "message": "No keyboard shortcut is assigned for entering and leaving aim mode. You can set one in Chrome's shortcut settings."
+    "message": "You can assign a keyboard shortcut of your choosing for entering and leaving aim mode. None is assigned to begin with."
   },
   "optionsShortcutButton": { "message": "Open Chrome's shortcut settings" },
   "optionsPrivacyHeading": { "message": "Privacy" },
