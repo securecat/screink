@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "screink",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Turn URLs and QR codes shown in a shared screen into something you can actually click.",
   "icons": {
     "16": "icons/icon-16.png",
