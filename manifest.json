@@ -34,8 +34,8 @@
     "storage"
   ],
   "commands": {
-    "toggle-aim-mode": {
-      "description": "__MSG_commandToggleAimMode__"
+    "start-aim-mode": {
+      "description": "__MSG_commandStartAimMode__"
     }
   },
   "content_security_policy": {

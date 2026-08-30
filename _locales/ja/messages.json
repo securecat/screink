@@ -3,16 +3,16 @@
   "extDescription": {
     "message": "Webページ中のQRコードをクリックできるようになります。Teams、Google Meet、Zoomの共有画面にも対応。"
   },
-  "commandToggleAimMode": { "message": "照準モードの開始 / 解除" },
+  "commandStartAimMode": { "message": "照準モードの開始" },
 
   "popupStart": { "message": "照準モードを開始" },
   "popupHowTo": { "message": "照準モード中の操作" },
   "popupShortcut": {
-    "message": "ショートカットキー $1 でも開始・解除できます。",
+    "message": "ショートカットキー $1 でも開始できます。",
     "placeholders": { "1": { "content": "$1" } }
   },
   "popupShortcutNone": {
-    "message": "照準モードの開始・解除には、好みのショートカットキーを割り当てられます。"
+    "message": "照準モードの開始には、好みのショートカットキーを割り当てられます。"
   },
   "popupOpenOptions": { "message": "オプション" },
   "popupStarting": { "message": "照準モードを開始しています…" },
@@ -47,11 +47,11 @@
   "optionsSavedOff": { "message": "off にして保存しました。" },
   "optionsShortcutHeading": { "message": "ショートカットキー" },
   "optionsShortcutBody": {
-    "message": "照準モードの開始・解除は $1 に割り当てられています。変更するには Chrome のショートカット設定を開いてください。",
+    "message": "照準モードの開始は $1 に割り当てられています。変更するには Chrome のショートカット設定を開いてください。",
     "placeholders": { "1": { "content": "$1" } }
   },
   "optionsShortcutNone": {
-    "message": "照準モードの開始・解除には、好みのショートカットキーを割り当てられます。現在は未設定です。"
+    "message": "照準モードの開始には、好みのショートカットキーを割り当てられます。現在は未設定です。"
   },
   "optionsShortcutButton": { "message": "Chrome のショートカット設定を開く" },
   "optionsPrivacyHeading": { "message": "プライバシー" },

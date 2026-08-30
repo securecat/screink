@@ -17,12 +17,13 @@
  * 「送信しない」ではなく「送信できない」構造を保つ（仕様書 §8.1）。
  */
 
+import { AIM_MODE_COMMAND } from '../shared/commands.js';
 import { getSettings } from '../shared/settings.js';
 import { toSafeUrl } from '../shared/url.js';
 import jsQR from '../vendor/jsqr/index.js';
 
 const MESSAGES = {
-  TOGGLE_AIM_MODE: 'screink:toggle-aim-mode',
+  START_AIM_MODE: 'screink:start-aim-mode',
   GET_SETTINGS: 'screink:get-settings',
   RECOGNIZE: 'screink:recognize',
   OPEN_URL: 'screink:open-url',
@@ -95,10 +96,11 @@ let lastCapture = null;
  * これにより host_permissions が不要になり、拡張は「使っている瞬間の
  * アクティブなタブ」以外に一切アクセスできない（仕様書 §4.2）。
  *
- * 2回目以降の注入では、注入先の isolated world に残っている
- * コントローラが toggle として振る舞う（aim-mode.js 冒頭を参照）。
+ * 2回目以降の注入では、注入先の isolated world に残っているコントローラが
+ * 開始し直す（aim-mode.js の `start()` を参照）。照準中や結果パネルの表示中に
+ * 起動しても、解除ではなく次の照準モードが始まる。解除は Esc だけとする。
  */
-async function toggleAimMode(tabId) {
+async function startAimMode(tabId) {
   await chrome.scripting.insertCSS({
     target: { tabId, allFrames: false },
     files: ['src/content/aim-mode.css'],
@@ -608,11 +610,11 @@ async function recognize(tab, request) {
  * ------------------------------------------------------------------ */
 
 chrome.commands.onCommand.addListener(async (command, tab) => {
-  if (command !== 'toggle-aim-mode') return;
+  if (command !== AIM_MODE_COMMAND) return;
   const target = tab ?? (await getActiveTab());
   if (!target?.id) return;
   try {
-    await toggleAimMode(target.id);
+    await startAimMode(target.id);
   } catch (error) {
     console.warn('[screink] 照準モードを開始できませんでした:', error);
   }
@@ -626,7 +628,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  if (type === MESSAGES.TOGGLE_AIM_MODE) {
+  if (type === MESSAGES.START_AIM_MODE) {
     (async () => {
       const tab = await getActiveTab();
       if (!tab?.id) {
@@ -634,7 +636,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
       try {
-        await toggleAimMode(tab.id);
+        await startAimMode(tab.id);
         sendResponse({ ok: true });
       } catch (error) {
         sendResponse({ ok: false, reason: 'injection-failed', detail: String(error) });

@@ -6,7 +6,7 @@
  * 一切アクセスしない（仕様書 §4.2）。
  *
  * 2回目以降の注入では、isolated world に残っているコントローラが
- * toggle として振る舞う（冒頭のガードを参照）。
+ * 開始し直す（冒頭のガードと `start()` を参照）。
  *
  * DOM の組み立てに innerHTML を使っていないのは意図的。
  * Trusted Types を強制しているページ（require-trusted-types-for 'script'）では
@@ -21,7 +21,7 @@
 
   const NS = '__screinkAimMode';
   if (window[NS]) {
-    window[NS].toggle();
+    window[NS].start();
     return;
   }
 
@@ -774,11 +774,21 @@
     previouslyFocused = null;
   }
 
-  function toggle() {
-    if (state === 'idle') enter();
-    else exit();
+  /**
+   * 照準モードを開始する。
+   *
+   * すでに照準中でも、結果パネルを見ている最中でも、いったん畳んで
+   * 新しく始め直す。起動の操作（ツールバーのアイコン・ショートカットキー）は
+   * 「開始」だけを行い、解除は Esc に一本化している。
+   *
+   * トグルにすると、結果パネルが出ている状態でポップアップから開始したときに
+   * パネルが閉じるだけになり、「開始したのに始まらない」という挙動になる。
+   */
+  function start() {
+    if (state !== 'idle') exit();
+    enter();
   }
 
-  window[NS] = { toggle, enter, exit };
-  enter();
+  window[NS] = { start, enter, exit };
+  start();
 })();

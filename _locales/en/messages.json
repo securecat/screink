@@ -3,16 +3,16 @@
   "extDescription": {
     "message": "Makes QR codes on web pages clickable. Works on screens shared in Teams, Google Meet and Zoom too."
   },
-  "commandToggleAimMode": { "message": "Enter or leave aim mode" },
+  "commandStartAimMode": { "message": "Enter aim mode" },
 
   "popupStart": { "message": "Enter aim mode" },
   "popupHowTo": { "message": "In aim mode" },
   "popupShortcut": {
-    "message": "$1 enters and leaves aim mode as well.",
+    "message": "$1 enters aim mode as well.",
     "placeholders": { "1": { "content": "$1" } }
   },
   "popupShortcutNone": {
-    "message": "You can assign a keyboard shortcut of your choosing for entering and leaving aim mode."
+    "message": "You can assign a keyboard shortcut of your choosing for entering aim mode."
   },
   "popupOpenOptions": { "message": "Options" },
   "popupStarting": { "message": "Entering aim mode…" },
@@ -47,11 +47,11 @@
   "optionsSavedOff": { "message": "Saved, turned off." },
   "optionsShortcutHeading": { "message": "Keyboard shortcut" },
   "optionsShortcutBody": {
-    "message": "$1 enters and leaves aim mode. Open Chrome's shortcut settings to change it.",
+    "message": "$1 enters aim mode. Open Chrome's shortcut settings to change it.",
     "placeholders": { "1": { "content": "$1" } }
   },
   "optionsShortcutNone": {
-    "message": "You can assign a keyboard shortcut of your choosing for entering and leaving aim mode. None is assigned at the moment."
+    "message": "You can assign a keyboard shortcut of your choosing for entering aim mode. None is assigned at the moment."
   },
   "optionsShortcutButton": { "message": "Open Chrome's shortcut settings" },
   "optionsPrivacyHeading": { "message": "Privacy" },

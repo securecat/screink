@@ -33,7 +33,7 @@ startButton.addEventListener('click', async () => {
 
   let response;
   try {
-    response = await chrome.runtime.sendMessage({ type: 'screink:toggle-aim-mode' });
+    response = await chrome.runtime.sendMessage({ type: 'screink:start-aim-mode' });
   } catch (error) {
     response = { ok: false, reason: 'messaging-failed', detail: String(error) };
   }
