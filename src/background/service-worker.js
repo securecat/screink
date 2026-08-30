@@ -60,6 +60,24 @@ const QUIET_ZONE_MIN = 12;
  */
 const MAX_DECODE_SIDE = 1200;
 
+/* ------------------------------------------------------------------ *
+ * 指した対象の輪郭を探すための定数（`locateTarget` を参照）
+ * ------------------------------------------------------------------ */
+
+/** 輪郭探索に使う画像の一辺の上限（物理ピクセル）。粗くてよいので小さくする。 */
+const LOCATE_MAX_SIDE = 720;
+/** 輪郭探索の粒度（縮小後の物理ピクセル）。 */
+const LOCATE_BLOCK = 6;
+/**
+ * 「模様がある」と見なす明暗の混在比率。
+ * QRコードは明暗がほぼ半々になる。真っ白な背景（0に近い）や
+ * 真っ黒な面（1に近い）を除くためのしきい値。
+ */
+const LOCATE_BUSY_MIN = 0.12;
+const LOCATE_BUSY_MAX = 0.88;
+/** 見つけた輪郭の外側に足す余裕（ブロック数）。端のモジュールを削らないため。 */
+const LOCATE_GROW_BLOCKS = 1;
+
 /**
  * 直近の切り出し結果。PoC の目視確認用に service worker のメモリ上だけで保持し、
  * chrome.storage には書かない。service worker が停止すれば失われる（それでよい）。
@@ -166,6 +184,148 @@ function cropRegion(bitmap, shot, region, dpr) {
     css: { x: region.x, y: region.y, width: region.width, height: region.height },
     padding,
     clamped: x !== rawX || y !== rawY || width !== rawW || height !== rawH,
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * 指した対象の輪郭を探す
+ * ------------------------------------------------------------------ */
+
+/**
+ * 指した位置にある「模様のかたまり」の輪郭を求める。
+ *
+ * なぜこれが要るか：
+ * 切り出しを常に「指した点を中心とする正方形」にすると、指す位置が
+ * コードの中心からずれるほど、コード全体を覆うのに必要な大きさが増える
+ * （半径が「中心までの距離＋コードの半分」になるため）。一方で隣のコードを
+ * 巻き込まない上限は小さくなる。この2条件を同時に満たす大きさが、
+ * 試す段階の刻みの間に落ちると読めない。
+ *
+ * 実測では、大きさの異なるコードが並んでいると、各コードの中央付近を
+ * 指したときしか読めなかった（仕様書 §5.1）。
+ *
+ * そこで、切り出す範囲を指した点ではなく**対象そのもの**に合わせる。
+ * 明暗が混在するブロックを連結し、指した位置を含むかたまりの輪郭を採る。
+ * QRコードは明暗がほぼ半々なので、白い余白や単色の面と区別できる。
+ *
+ * @returns {{x:number,y:number,width:number,height:number} | null} CSSピクセル
+ */
+function locateTarget(bitmap, shot, searchRegion, dpr, point) {
+  // 探索範囲を物理ピクセルへ落とし、画像内に収める
+  const sx = Math.min(Math.max(Math.round(searchRegion.x * dpr), 0), Math.max(shot.width - 1, 0));
+  const sy = Math.min(Math.max(Math.round(searchRegion.y * dpr), 0), Math.max(shot.height - 1, 0));
+  const sw = Math.max(Math.min(Math.round(searchRegion.width * dpr), shot.width - sx), 1);
+  const sh = Math.max(Math.min(Math.round(searchRegion.height * dpr), shot.height - sy), 1);
+
+  // 粗くてよいので縮小して調べる
+  const scale = Math.min(1, LOCATE_MAX_SIDE / Math.max(sw, sh));
+  const width = Math.max(1, Math.round(sw * scale));
+  const height = Math.max(1, Math.round(sh * scale));
+
+  const canvas = new OffscreenCanvas(width, height);
+  const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
+  ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, width, height);
+  const { data } = ctx.getImageData(0, 0, width, height);
+
+  const cols = Math.ceil(width / LOCATE_BLOCK);
+  const rows = Math.ceil(height / LOCATE_BLOCK);
+  const busy = new Uint8Array(cols * rows);
+
+  for (let by = 0; by < rows; by += 1) {
+    for (let bx = 0; bx < cols; bx += 1) {
+      let dark = 0;
+      let total = 0;
+      const yEnd = Math.min((by + 1) * LOCATE_BLOCK, height);
+      const xEnd = Math.min((bx + 1) * LOCATE_BLOCK, width);
+      for (let y = by * LOCATE_BLOCK; y < yEnd; y += 1) {
+        for (let x = bx * LOCATE_BLOCK; x < xEnd; x += 1) {
+          const i = (y * width + x) * 4;
+          // 輝度の近似（緑を重く見る）
+          const luma = (data[i] * 3 + data[i + 1] * 6 + data[i + 2]) / 10;
+          if (luma < 128) dark += 1;
+          total += 1;
+        }
+      }
+      const ratio = total > 0 ? dark / total : 0;
+      busy[by * cols + bx] = ratio > LOCATE_BUSY_MIN && ratio < LOCATE_BUSY_MAX ? 1 : 0;
+    }
+  }
+
+  // 指した位置をブロック座標へ
+  const pointX = Math.round((point.x * dpr - sx) * scale);
+  const pointY = Math.round((point.y * dpr - sy) * scale);
+  const startCol = Math.min(Math.max(Math.floor(pointX / LOCATE_BLOCK), 0), cols - 1);
+  const startRow = Math.min(Math.max(Math.floor(pointY / LOCATE_BLOCK), 0), rows - 1);
+
+  // 指したブロックが「模様なし」なら、すぐ隣までは許容する
+  // （コードの白い部分を指した場合に備える）
+  let seedIndex = -1;
+  for (let radius = 0; radius <= 2 && seedIndex < 0; radius += 1) {
+    for (let dy = -radius; dy <= radius && seedIndex < 0; dy += 1) {
+      for (let dx = -radius; dx <= radius && seedIndex < 0; dx += 1) {
+        const col = startCol + dx;
+        const row = startRow + dy;
+        if (col < 0 || row < 0 || col >= cols || row >= rows) continue;
+        if (busy[row * cols + col]) seedIndex = row * cols + col;
+      }
+    }
+  }
+  if (seedIndex < 0) return null;
+
+  // 連結成分をたどって輪郭を求める（8近傍）
+  const seen = new Uint8Array(cols * rows);
+  const queue = [seedIndex];
+  seen[seedIndex] = 1;
+  let minCol = cols;
+  let minRow = rows;
+  let maxCol = -1;
+  let maxRow = -1;
+
+  while (queue.length > 0) {
+    const index = queue.pop();
+    const col = index % cols;
+    const row = (index - col) / cols;
+    if (col < minCol) minCol = col;
+    if (row < minRow) minRow = row;
+    if (col > maxCol) maxCol = col;
+    if (row > maxRow) maxRow = row;
+
+    for (let dy = -1; dy <= 1; dy += 1) {
+      for (let dx = -1; dx <= 1; dx += 1) {
+        const nextCol = col + dx;
+        const nextRow = row + dy;
+        if (nextCol < 0 || nextRow < 0 || nextCol >= cols || nextRow >= rows) continue;
+        const next = nextRow * cols + nextCol;
+        if (busy[next] && !seen[next]) {
+          seen[next] = 1;
+          queue.push(next);
+        }
+      }
+    }
+  }
+
+  // ブロック座標 -> 縮小画像 -> 物理ピクセル -> CSSピクセル
+  const grow = LOCATE_GROW_BLOCKS;
+  const left = Math.max((minCol - grow) * LOCATE_BLOCK, 0);
+  const top = Math.max((minRow - grow) * LOCATE_BLOCK, 0);
+  const right = Math.min((maxCol + 1 + grow) * LOCATE_BLOCK, width);
+  const bottom = Math.min((maxRow + 1 + grow) * LOCATE_BLOCK, height);
+
+  const deviceX = sx + left / scale;
+  const deviceY = sy + top / scale;
+  const deviceW = (right - left) / scale;
+  const deviceH = (bottom - top) / scale;
+
+  // 探索範囲いっぱいに広がった場合は、対象を切り分けられていないので使わない
+  if (deviceW > sw * 0.92 && deviceH > sh * 0.92) return null;
+  // 小さすぎるものも使わない（読める下限は物理48px）
+  if (deviceW < 32 || deviceH < 32) return null;
+
+  return {
+    x: deviceX / dpr,
+    y: deviceY / dpr,
+    width: deviceW / dpr,
+    height: deviceH / dpr,
   };
 }
 
@@ -352,9 +512,28 @@ async function recognize(tab, request) {
     x: Number(request.point?.x) || 0,
     y: Number(request.point?.y) || 0,
   };
-  const regions = Array.isArray(request.regions) && request.regions.length > 0
+  const ladder = Array.isArray(request.regions) && request.regions.length > 0
     ? request.regions
     : [];
+
+  /*
+   * まず、指した位置にある「模様のかたまり」の輪郭を探し、そこを最初に試す。
+   * 対象そのものに合わせて切り出すので、隣に別のコードがあっても、
+   * 大きさが違っても、指す位置が中心からずれていても切り分けられる。
+   *
+   * 見つからない場合や読めなかった場合は、従来どおり
+   * 「指した点を中心に狭い方から広げる」段階へ落ちる。
+   */
+  let located = null;
+  if (ladder.length > 0) {
+    try {
+      located = locateTarget(bitmap, shot, ladder[ladder.length - 1], dpr, point);
+    } catch (error) {
+      console.warn('[screink] 輪郭の探索に失敗しました:', error);
+    }
+  }
+
+  const regions = located ? [located, ...ladder] : ladder;
 
   /** 目視確認用に残す切り出し（見つからなくても最初の1枚は残す）。 */
   let used = null;
@@ -390,6 +569,9 @@ async function recognize(tab, request) {
     dataUrl: await canvasToDataUrl(result.crop.canvas),
     device: result.crop.device,
     css: result.crop.css,
+    // 画像には人工的な白い余白が付いている。位置を重ねる側はこの分をずらす
+    padding: result.crop.padding,
+    locatedTarget: located !== null,
     viewportImage: shot,
     dpr,
     clamped: result.crop.clamped,

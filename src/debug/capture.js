@@ -25,6 +25,8 @@ function describeGeometry(capture) {
     `DPR      : ${capture.dpr}`,
     `画面画像 : ${capture.viewportImage.width}×${capture.viewportImage.height}`,
     `指した点 : (${Math.round(capture.point.x)}, ${Math.round(capture.point.y)}) CSS px`,
+    `余白     : ${capture.padding ?? 0} px（読み取り用に足した白い縁）`,
+    `切り出し : ${capture.locatedTarget ? '指した対象の輪郭に合わせた' : '指した点を中心に段階的に拡大'}`,
     `認識     : ${capture.engine} / ${capture.elapsedMs} ms / 試した範囲 ${capture.attemptCount} 段階`,
     capture.clamped ? '※ 画面端のため領域を画面内に収めました' : '',
   ]
@@ -38,10 +40,12 @@ function renderMarkers(capture, image) {
 
   const markers = [];
 
-  // 指した位置（切り出し画像内の物理ピクセルへ変換）
+  // 指した位置（切り出し画像内の物理ピクセルへ変換）。
+  // 画像の周囲には白い余白が足してあるので、その分ずらす。
+  const padding = capture.padding ?? 0;
   const pointInCrop = {
-    x: capture.point.x * capture.dpr - capture.device.x,
-    y: capture.point.y * capture.dpr - capture.device.y,
+    x: capture.point.x * capture.dpr - capture.device.x + padding,
+    y: capture.point.y * capture.dpr - capture.device.y + padding,
   };
   const crosshair = el('div', 'marker marker--point');
   markers.push({ node: crosshair, place: (k) => {
