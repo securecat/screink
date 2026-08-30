@@ -27,9 +27,11 @@ const checkboxFields = {
 /*
  * 保存できたことの表示は状態として持っておく。
  * 表示言語を切り替えたときに、出したままの文言も新しい言語で作り直すため。
+ *
+ * どちらも「何をどうしたか」を文言で伝える。色だけで伝えない。
  */
 let savedOpenCapture = null;
-let savedLanguage = false;
+let savedLanguage = null;
 
 /*
  * ショートカットキーの表記は実際の割り当てから作る（popup.js と同じ理由）。
@@ -45,7 +47,11 @@ function renderTexts() {
 
   statusText.textContent =
     savedOpenCapture === null ? '' : t(savedOpenCapture ? 'optionsSavedOn' : 'optionsSavedOff');
-  languageStatus.textContent = savedLanguage ? t('optionsSavedLanguage') : '';
+
+  languageStatus.textContent =
+    savedLanguage === null
+      ? ''
+      : t(savedLanguage === 'ja' ? 'optionsSavedLanguageJapanese' : 'optionsSavedLanguageEnglish');
 }
 
 function populate(current) {
@@ -57,13 +63,21 @@ function populate(current) {
 }
 
 /*
- * 保存できたことの表示は、ページを見ているあいだは消さない。
+ * 保存できたことの表示は、そのコントロールを操作しているあいだは残す。
+ * 他のコントロールへ移ったら、その時点で消す。
+ * いつの操作の結果とも分からない表示が残り続けないようにするため。
  *
- * 以前はフォーカスが他のコントロールへ移った時点で消していたが、
- * 消すこと自体がレイアウトを動かし、直後のボタンを押そうとした瞬間に
- * 位置がずれて押せない、という不具合になっていた。
- * 表示はラベルと同じ行にあり、残っていても邪魔にならない。
+ * 以前は「他のコントロールへ移ったら消す」をやめていた時期がある。
+ * 表示が設定の下の行にあり、消えるとレイアウトが動いて、直後のボタンを
+ * 押そうとした瞬間に位置がずれて押せなくなっていたため。
+ * いまは表示をラベルと同じ行に置いてあるので、消えても何も動かない。
  */
+document.addEventListener('focusin', (event) => {
+  if (!Object.values(checkboxFields).includes(event.target)) savedOpenCapture = null;
+  if (!languageInputs.includes(event.target)) savedLanguage = null;
+  renderTexts();
+});
+
 for (const [key, input] of Object.entries(checkboxFields)) {
   input.addEventListener('change', async () => {
     await saveSetting(key, input.checked);
@@ -82,7 +96,7 @@ for (const input of languageInputs) {
     if (!input.checked) return;
     await saveSetting('uiLanguage', input.value);
     setLanguage(input.value);
-    savedLanguage = true;
+    savedLanguage = input.value;
     localizePage('optionsTitle');
     renderTexts();
   });
@@ -95,7 +109,7 @@ for (const input of languageInputs) {
  */
 window.addEventListener('blur', () => {
   savedOpenCapture = null;
-  savedLanguage = false;
+  savedLanguage = null;
   renderTexts();
 });
 
