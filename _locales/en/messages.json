@@ -1,7 +1,7 @@
 {
   "extName": { "message": "screink" },
   "extDescription": {
-    "message": "Open a QR code shown in a shared screen, on the computer you are already using."
+    "message": "Makes QR codes on web pages clickable. Works on screens shared in Teams, Google Meet and Zoom too."
   },
   "commandToggleAimMode": { "message": "Enter or leave aim mode" },
 
