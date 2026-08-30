@@ -87,9 +87,27 @@ CHROME_EXTENSION.md の規定構成に、このプロジェクト固有のもの
 ```
 
 同梱ライブラリを追加・更新するときは `src/vendor/<name>/README.md` に
-バージョン・取得元・ライセンス・sha256・更新手順を記録すること。
+バージョン・取得元・ライセンス・sha256 を記録すること。
 **upstream の配布ファイルは1バイトも変更しない**（差し替えを機械的に行えるようにするため）。
 ES モジュールとして使うためのラッパーが必要なら、別ファイルに分けて置く。
+
+**`src/vendor/` の README は配布物に入る。** ストアからインストールした人も読める場所なので、
+開発の文脈（仕様書の節番号、`work/` のテスト、設計の経緯、既知の制約、更新手順）を書かない。
+「何を・どこから持ってきて・どのライセンスで・改変していないか」だけにする。
+経緯は仕様書へ、手順はこのファイルへ置く。
+
+jsQR を更新する手順：
+
+```
+npm pack jsqr@<version>
+tar -xzf jsqr-<version>.tgz
+cp package/dist/jsQR.js src/vendor/jsqr/jsqr.umd.js
+cp package/LICENSE      src/vendor/jsqr/LICENSE
+```
+
+そのうえで `src/vendor/jsqr/README.md` のバージョンと sha256 を更新し、E2E スモークテストを通す。
+`index.js` は upstream の API が変わらなければ触らなくてよい。
+`BarcodeDetector` を使わない理由は仕様書 §4.5 にある。
 
 ---
 
