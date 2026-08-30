@@ -67,7 +67,3 @@ export async function saveSetting(key, value) {
   return normalized;
 }
 
-export async function resetSettings() {
-  await chrome.storage.local.set(DEFAULT_SETTINGS);
-  return { ...DEFAULT_SETTINGS };
-}

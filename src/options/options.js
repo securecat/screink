@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, getSettings, saveSetting, resetSettings } from '../shared/settings.js';
+import { DEFAULT_SETTINGS, getSettings, saveSetting } from '../shared/settings.js';
 import { localizePage, t } from '../shared/i18n.js';
 import { getAimModeShortcut } from '../shared/commands.js';
 
@@ -10,9 +10,7 @@ document.querySelector('#shortcut').textContent = shortcut
   ? t('optionsShortcutBody', [shortcut])
   : t('optionsShortcutNone');
 
-const form = document.querySelector('#settings-form');
 const statusText = document.querySelector('#status');
-const resetButton = document.querySelector('#reset');
 const shortcutsButton = document.querySelector('#open-shortcuts');
 
 const checkboxFields = {
@@ -42,19 +40,13 @@ for (const [key, input] of Object.entries(checkboxFields)) {
   });
 }
 
-resetButton.addEventListener('click', async () => {
-  const settings = await resetSettings();
-  populate(settings);
-  setStatus(t('optionsResetDone'), resetButton);
-});
-
 shortcutsButton.addEventListener('click', async () => {
   // chrome:// は <a href> から開けないため、ここだけボタンで遷移させる
   await chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
 });
 
 // 注視が別のコントロールへ移った時点でステータスを消す
-form.addEventListener('focusin', (event) => {
+document.addEventListener('focusin', (event) => {
   if (statusOwner && event.target !== statusOwner) setStatus('');
 });
 

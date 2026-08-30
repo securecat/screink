@@ -3,58 +3,47 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>screink settings</title>
+    <title>screink options</title>
     <link rel="stylesheet" href="../shared/page.css" />
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
     <main>
-      <h1 data-i18n="optionsTitle">screink settings</h1>
+      <h1 data-i18n="optionsTitle">screink options</h1>
 
       <p class="note" data-i18n="optionsAutoSave">Changes are saved as you make them.</p>
 
-      <form id="settings-form">
-        <fieldset>
-          <legend data-i18n="optionsDiagnosticsLegend">When something will not read</legend>
+      <h2 data-i18n="optionsDiagnosticsLegend">When something will not read</h2>
 
-          <div class="field field--check">
-            <input type="checkbox" id="open-capture-in-tab" name="openCaptureInTab" />
-            <label for="open-capture-in-tab" data-i18n="optionsAutoOpenLabel">
-              Open the captured image in a new tab every time
-            </label>
-          </div>
+      <p class="note" data-i18n="optionsAutoOpenNote">
+        You can open it any time from the panel that appears after reading, so leaving this off
+        loses nothing. Keep it off if you would rather not have tabs switch during a meeting.
+      </p>
 
-          <p class="note" data-i18n="optionsAutoOpenNote">
-            You can open it any time from the panel that appears after reading, so leaving this off
-            loses nothing. Keep it off if you would rather not have tabs switch during a meeting.
-          </p>
-        </fieldset>
+      <div class="field field--check">
+        <input type="checkbox" id="open-capture-in-tab" name="openCaptureInTab" />
+        <label for="open-capture-in-tab" data-i18n="optionsAutoOpenLabel">
+          Open the captured image in a new tab every time
+        </label>
+      </div>
 
-        <p class="status" id="status" role="status"></p>
-
-        <div class="actions">
-          <button type="button" id="reset" class="secondary" data-i18n="optionsReset">
-            Restore defaults
-          </button>
-        </div>
-      </form>
-
-      <hr />
+      <p class="status" id="status" role="status"></p>
 
       <h2 data-i18n="optionsShortcutHeading">Keyboard shortcut</h2>
+
       <!-- 実際の割り当ては options.js が chrome.commands から取って差し替える -->
       <p id="shortcut">
         Alt+Shift+S enters and leaves aim mode. Open Chrome's shortcut settings to change it.
       </p>
+
       <div class="actions">
         <button type="button" id="open-shortcuts" class="secondary" data-i18n="optionsShortcutButton">
           Open Chrome's shortcut settings
         </button>
       </div>
 
-      <hr />
-
       <h2 data-i18n="optionsPrivacyHeading">Privacy</h2>
+
       <ul>
         <li data-i18n="optionsPrivacy1">
           Everything happens inside your browser. No image and no URL is ever sent anywhere.
@@ -67,6 +56,19 @@
           A single frame is captured at the moment you confirm a position — never continuously.
         </li>
       </ul>
+
+      <hr />
+
+      <!--
+        リンクを文中に置くため、前・リンク・後の3つに分けている。
+        1つの文にリンクを埋め込む形にすると、言語で語順が変わったときに対応できない。
+      -->
+      <p>
+        <span data-i18n="optionsBugBefore">Found a bug? </span
+        ><a href="https://github.com/securecat/screink/issues" data-i18n="optionsBugLink"
+          >Report it on GitHub Issues</a
+        ><span data-i18n="optionsBugAfter">.</span>
+      </p>
     </main>
 
     <script type="module" src="options.js"></script>

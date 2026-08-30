@@ -227,11 +227,12 @@
   margin: 0 0 8px !important;
 }
 
+/*
+ * 見出しラベル。枠を付けるとボタンに見えてしまうので、文字だけにする。
+ * 「開く先：」のようにコロンは文言側に持たせている（言語ごとに記号が違うため）。
+ */
 .screink-panel__label {
   display: inline-block !important;
-  padding: 2px 8px !important;
-  border: 1px solid var(--screink-ui-border) !important;
-  border-radius: 4px !important;
   color: var(--screink-text-note) !important;
   font-size: 16px !important;
   white-space: nowrap !important;
@@ -308,6 +309,11 @@
   color: var(--screink-text) !important;
   border: 2px solid var(--screink-ui-border) !important;
   font-weight: 400 !important;
+}
+
+/* 押せることが分かるよう、ホバーでラベルに下線を引く */
+.screink-button:hover {
+  text-decoration: underline !important;
 }
 
 .screink-root :focus-visible {

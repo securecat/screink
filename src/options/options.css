@@ -14,49 +14,15 @@ h1 {
 }
 
 h2 {
+  margin-top: 32px;
   font-size: 20px;
-}
-
-fieldset {
-  margin: 0 0 24px;
-  padding: 16px 20px 20px;
-  background: var(--surface);
-  border: 1px solid var(--divider);
-  border-radius: 10px;
-}
-
-legend {
-  padding: 0 8px;
-  font-size: 18px;
-  font-weight: 700;
 }
 
 .field {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   margin: 0 0 12px;
-}
-
-.field:last-child {
-  margin-bottom: 0;
-}
-
-.field--check {
-  align-items: flex-start;
-}
-
-.field label {
-  min-width: 4em;
-}
-
-.field--check label {
-  min-width: 0;
-}
-
-.unit {
-  color: var(--text-note);
-  font-family: monospace;
 }
 
 ul {

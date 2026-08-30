@@ -5,9 +5,6 @@
   },
   "commandToggleAimMode": { "message": "Enter or leave aim mode" },
 
-  "popupIntro": {
-    "message": "Reads a QR code shown in a shared screen. Enter aim mode, then point at the code you want."
-  },
   "popupStart": { "message": "Enter aim mode" },
   "popupHowTo": { "message": "In aim mode" },
   "popupShortcut": {
@@ -17,7 +14,7 @@
   "popupShortcutNone": {
     "message": "No keyboard shortcut is assigned. You can set one from the settings."
   },
-  "popupOpenOptions": { "message": "Open settings" },
+  "popupOpenOptions": { "message": "Options" },
   "popupStarting": { "message": "Entering aim mode…" },
 
   "keyClick": { "message": "Click" },
@@ -37,7 +34,7 @@
   },
   "errorStartFailed": { "message": "Aim mode could not be started." },
 
-  "optionsTitle": { "message": "screink settings" },
+  "optionsTitle": { "message": "screink options" },
   "optionsAutoSave": { "message": "Changes are saved as you make them." },
   "optionsDiagnosticsLegend": { "message": "When something will not read" },
   "optionsAutoOpenLabel": {
@@ -46,8 +43,6 @@
   "optionsAutoOpenNote": {
     "message": "You can open it any time from the panel that appears after reading, so leaving this off loses nothing. Keep it off if you would rather not have tabs switch during a meeting."
   },
-  "optionsReset": { "message": "Restore defaults" },
-  "optionsResetDone": { "message": "All settings restored to their defaults." },
   "optionsSavedOn": { "message": "Saved, turned on." },
   "optionsSavedOff": { "message": "Saved, turned off." },
   "optionsShortcutHeading": { "message": "Keyboard shortcut" },
@@ -60,6 +55,9 @@
   },
   "optionsShortcutButton": { "message": "Open Chrome's shortcut settings" },
   "optionsPrivacyHeading": { "message": "Privacy" },
+  "optionsBugBefore": { "message": "Found a bug? " },
+  "optionsBugLink": { "message": "Report it on GitHub Issues" },
+  "optionsBugAfter": { "message": "." },
   "optionsPrivacy1": {
     "message": "Everything happens inside your browser. No image and no URL is ever sent anywhere."
   },
@@ -117,7 +115,7 @@
     "message": "screink aim mode: point at the QR code you want to read"
   },
   "overlayPanelLabel": { "message": "What screink read" },
-  "overlayDestination": { "message": "Opens" },
+  "overlayDestination": { "message": "Opens:" },
   "overlayTitleUrl": { "message": "QR code read" },
   "overlayTitleText": { "message": "QR code read as text" },
   "overlayTitleNotFound": { "message": "No QR code found" },

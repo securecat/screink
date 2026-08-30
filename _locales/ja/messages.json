@@ -5,9 +5,6 @@
   },
   "commandToggleAimMode": { "message": "照準モードの開始 / 解除" },
 
-  "popupIntro": {
-    "message": "画面共有に映っているQRコードを読み取ります。照準モードに入って、読み取りたいQRコードを指してください。"
-  },
   "popupStart": { "message": "照準モードを開始" },
   "popupHowTo": { "message": "照準モード中の操作" },
   "popupShortcut": {
@@ -17,7 +14,7 @@
   "popupShortcutNone": {
     "message": "ショートカットキーは割り当てられていません。設定から割り当てられます。"
   },
-  "popupOpenOptions": { "message": "設定を開く" },
+  "popupOpenOptions": { "message": "オプション" },
   "popupStarting": { "message": "照準モードを開始しています…" },
 
   "keyClick": { "message": "クリック" },
@@ -37,7 +34,7 @@
   },
   "errorStartFailed": { "message": "照準モードを開始できませんでした。" },
 
-  "optionsTitle": { "message": "スクリーンクの設定" },
+  "optionsTitle": { "message": "スクリーンク オプション設定" },
   "optionsAutoSave": { "message": "変更した内容はその場で保存されます。" },
   "optionsDiagnosticsLegend": { "message": "読み取れないときの確認" },
   "optionsAutoOpenLabel": {
@@ -46,8 +43,6 @@
   "optionsAutoOpenNote": {
     "message": "off のままでも、読み取ったあとに表示されるパネルのボタンからいつでも開けます。会議中にタブが切り替わるのを避けたい場合は off のままにしてください。"
   },
-  "optionsReset": { "message": "既定値に戻す" },
-  "optionsResetDone": { "message": "すべての設定を既定値に戻しました。" },
   "optionsSavedOn": { "message": "on にして保存しました。" },
   "optionsSavedOff": { "message": "off にして保存しました。" },
   "optionsShortcutHeading": { "message": "ショートカットキー" },
@@ -60,6 +55,9 @@
   },
   "optionsShortcutButton": { "message": "Chrome のショートカット設定を開く" },
   "optionsPrivacyHeading": { "message": "プライバシー" },
+  "optionsBugBefore": { "message": "バグを見つけたら、" },
+  "optionsBugLink": { "message": "GitHub Issues" },
+  "optionsBugAfter": { "message": "へ報告してください。" },
   "optionsPrivacy1": {
     "message": "画像の解析はすべてブラウザ内で完結します。画像もURLも外部へ送信されません。"
   },
@@ -117,7 +115,7 @@
     "message": "スクリーンク 照準モード：読み取りたいQRコードを指してください"
   },
   "overlayPanelLabel": { "message": "スクリーンクの読み取り結果" },
-  "overlayDestination": { "message": "開く先" },
+  "overlayDestination": { "message": "開く先：" },
   "overlayTitleUrl": { "message": "QRコードを読み取りました" },
   "overlayTitleText": { "message": "QRコードのテキストを読み取りました" },
   "overlayTitleNotFound": { "message": "QRコードを見つけられませんでした" },
