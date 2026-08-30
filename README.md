@@ -59,10 +59,10 @@ QR codes are decoded by [jsQR](https://github.com/cozmo/jsQR) (Apache License 2.
 #### Changed
 
 - The toolbar icon and the keyboard shortcut now only start aim mode. Leaving is `Esc` and nothing else. Both used to toggle, so pressing "Enter aim mode" while the panel from the last read was open just closed the panel — a button that did not do what it said. Starting now folds away whatever is on screen and begins a fresh aim.
-- Messages saying a setting was saved clear as soon as you touch another control. They used to sit until the page lost focus, so a message could linger beside a setting you had stopped thinking about.
 
 #### Fixed
 
+- Messages saying a setting was saved stayed until the whole page lost focus. A message like that should go once your attention has clearly moved on, so it now clears as soon as you touch another control.
 - The message after a language change read "Saved." either way, leaving its colour to say which language had been chosen. It now names the language.
 - The Japanese radio label sat right up against the message beside it.
 
@@ -131,10 +131,10 @@ QRコードのデコードには[jsQR](https://github.com/cozmo/jsQR)（Apache L
 #### 変更
 
 - ツールバーのアイコンとショートカットキーは、照準モードの開始だけを行うようにしました。解除は `Esc` だけです。どちらもトグルだったため、読み取り結果のパネルが出ている状態で「照準モードを開始」を押しても、パネルが閉じるだけで照準モードに入りませんでした。ボタンに書いてあることと違う動きになっていたわけです。いまは、何が出ていてもいったん畳んで、新しい照準モードが始まります。
-- 設定を保存したことを伝える表示が、別のコントロールに触れた時点で消えるようになりました。これまではページから離れるまで残っていたため、もう見ていない設定の横に表示が残り続けることがありました。
 
 #### 修正
 
+- 設定を保存したことを伝える表示が、ページ全体からフォーカスが外れるまで消えませんでした。この種の表示は、ユーザーの注視が別へ移ったことが明らかな時点で消すべきものなので、別のコントロールに触れた時点で消えるようにしました。
 - 表示言語を変えたときの表示が、どちらを選んでも「保存しました。」だけで、どちらにしたのかを色だけが伝えている状態でした。選んだ言語を文言に含めるようにしました。
 - 日本語のラジオボタンのラベルが、その隣の表示にくっつきすぎていました。
 
