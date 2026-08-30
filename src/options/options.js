@@ -22,13 +22,12 @@ function populate(settings) {
 }
 
 /*
- * 保存できたことの表示は消さず、次の操作の結果で置き換える。
+ * 保存できたことの表示は、ページを見ているあいだは消さない。
  *
  * 以前はフォーカスが他のコントロールへ移った時点で消していたが、
  * 消すこと自体がレイアウトを動かし、直後のボタンを押そうとした瞬間に
  * 位置がずれて押せない、という不具合になっていた。
- * 表示はラベルと同じ行に置いてあり、残っていても邪魔にならないうえ、
- * 現在の状態を正しく述べているので、消す理由がない。
+ * 表示はラベルと同じ行にあり、残っていても邪魔にならない。
  */
 for (const [key, input] of Object.entries(checkboxFields)) {
   input.addEventListener('change', async () => {
@@ -36,6 +35,15 @@ for (const [key, input] of Object.entries(checkboxFields)) {
     statusText.textContent = t(input.checked ? 'optionsSavedOn' : 'optionsSavedOff');
   });
 }
+
+/*
+ * ページから離れたら消す。
+ * 次に戻ってきたときに、いつのものとも分からない結果が残っていない状態にする。
+ * 離れているあいだの消去なので、操作の瞬間にレイアウトが動くことはない。
+ */
+window.addEventListener('blur', () => {
+  statusText.textContent = '';
+});
 
 shortcutsButton.addEventListener('click', async () => {
   // chrome:// は <a href> から開けないため、ここだけボタンで遷移させる
