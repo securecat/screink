@@ -51,7 +51,7 @@
     "placeholders": { "1": { "content": "$1" } }
   },
   "optionsShortcutNone": {
-    "message": "照準モードの開始・解除には、好みのショートカットキーを割り当てられます。初期状態では何も割り当てていません。"
+    "message": "照準モードの開始・解除には、好みのショートカットキーを割り当てられます。現在は未設定です。"
   },
   "optionsShortcutButton": { "message": "Chrome のショートカット設定を開く" },
   "optionsPrivacyHeading": { "message": "プライバシー" },
