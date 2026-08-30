@@ -5,6 +5,16 @@ All notable changes to screink are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.0] - 2026-08-31
+
+### Added
+
+- The release version. screink reads QR codes.
+
+### Fixed
+
+- The outline marking what was read stayed with the screen when the page scrolled, drifting away from the QR code it marks. It rides with the page now, and disappears once it has scrolled off screen.
+
 ## [0.4.0] - 2026-08-31
 
 ### Added
@@ -110,6 +120,16 @@ screink のすべての重要な変更点をこのファイルに記載します
 
 形式は [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) に基づき、
 バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
+
+## [1.0.0] - 2026-08-31
+
+### 追加
+
+- リリースバージョンになりました。読み取れるのはQRコードです。
+
+### 修正
+
+- 読み取った位置を示す枠が、ページをスクロールしても画面に貼り付いたまま残り、示していたQRコードから離れていってしまいました。ページの内容と一緒に動くようにし、画面の外へ出たら消えるようにしました。
 
 ## [0.4.0] - 2026-08-31
 

@@ -50,21 +50,15 @@ QR codes are decoded by [jsQR](https://github.com/cozmo/jsQR) (Apache License 2.
 
 ## Changelog
 
-### [0.4.0] - 2026-08-31
+### [1.0.0] - 2026-08-31
 
 #### Added
 
-- A language setting on the options page. Pick English or Japanese and screink stays in it, whatever language the browser is set to; until you pick, it follows the browser as before. The extension's name, its description and the shortcut description are the exception — Chrome resolves those from the browser's language and an extension cannot override them.
-
-#### Changed
-
-- The toolbar icon and the keyboard shortcut now only start aim mode. Leaving is `Esc` and nothing else. Both used to toggle, so pressing "Enter aim mode" while the panel from the last read was open just closed the panel — a button that did not do what it said. Starting now folds away whatever is on screen and begins a fresh aim.
+- The release version. screink reads QR codes.
 
 #### Fixed
 
-- Messages saying a setting was saved stayed until the whole page lost focus. A message like that should go once your attention has clearly moved on, so it now clears as soon as you touch another control.
-- The message after a language change read "Saved." either way, leaving its colour to say which language had been chosen. It now names the language.
-- The Japanese radio label sat right up against the message beside it.
+- The outline marking what was read stayed with the screen when the page scrolled, drifting away from the QR code it marks. It rides with the page now, and disappears once it has scrolled off screen.
 
 For the full history, see [CHANGELOG.md](CHANGELOG.md).
 
@@ -122,20 +116,14 @@ QRコードのデコードには[jsQR](https://github.com/cozmo/jsQR)（Apache L
 
 ## 更新履歴
 
-### [0.4.0] - 2026-08-31
+### [1.0.0] - 2026-08-31
 
 #### 追加
 
-- オプション設定に表示言語の設定を追加しました。英語か日本語かを選ぶと、ブラウザの表示言語に関わらずその言語で表示します。選ぶまでは、これまでどおりブラウザの表示言語に従います。拡張の名前・説明・ショートカットキーの説明だけは例外で、これらは Chrome がブラウザの表示言語で解決するため、拡張の側からは切り替えられません。
-
-#### 変更
-
-- ツールバーのアイコンとショートカットキーは、照準モードの開始だけを行うようにしました。解除は `Esc` だけです。どちらもトグルだったため、読み取り結果のパネルが出ている状態で「照準モードを開始」を押しても、パネルが閉じるだけで照準モードに入りませんでした。ボタンに書いてあることと違う動きになっていたわけです。いまは、何が出ていてもいったん畳んで、新しい照準モードが始まります。
+- リリースバージョンになりました。読み取れるのはQRコードです。
 
 #### 修正
 
-- 設定を保存したことを伝える表示が、ページ全体からフォーカスが外れるまで消えませんでした。この種の表示は、ユーザーの注視が別へ移ったことが明らかな時点で消すべきものなので、別のコントロールに触れた時点で消えるようにしました。
-- 表示言語を変えたときの表示が、どちらを選んでも「保存しました。」だけで、どちらにしたのかを色だけが伝えている状態でした。選んだ言語を文言に含めるようにしました。
-- 日本語のラジオボタンのラベルが、その隣の表示にくっつきすぎていました。
+- 読み取った位置を示す枠が、ページをスクロールしても画面に貼り付いたまま残り、示していたQRコードから離れていってしまいました。ページの内容と一緒に動くようにし、画面の外へ出たら消えるようにしました。
 
 全履歴は [CHANGELOG.md](CHANGELOG.md) を参照してください。
