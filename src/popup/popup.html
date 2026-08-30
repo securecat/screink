@@ -1,5 +1,11 @@
 <!doctype html>
-<html lang="ja">
+<!--
+  文字列は既定言語（英語）を直書きし、読み込み時に chrome.i18n の文言へ
+  差し替える（../shared/i18n.js）。空要素にして実行時に埋める方式は、
+  スクリプトが動かなかったときに何も読めないページになるため採らない。
+  lang も差し替え時に実際の表示言語へ合わせる。
+-->
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <title>screink</title>
@@ -9,30 +15,44 @@
   <body>
     <h1>screink</h1>
 
-    <p>
-      画面共有に写っているURLやQRコードを読み取ります。照準モードに入って、読み取りたい場所を指してください。
+    <p data-i18n="popupIntro">
+      Reads a QR code shown in a shared screen. Enter aim mode, then point at the code you want.
     </p>
 
-    <button id="start" type="button">照準モードを開始</button>
+    <button id="start" type="button" data-i18n="popupStart">Enter aim mode</button>
 
     <p class="status" id="status" role="status"></p>
 
     <hr />
 
-    <h2>照準モード中の操作</h2>
-    <ul>
-      <li>クリック、または <kbd>←</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>→</kbd> で位置を指定して <kbd>Enter</kbd></li>
-      <li><kbd>Shift</kbd> を押しながらの矢印キーで 1px ずつ微調整</li>
-      <li><kbd>Esc</kbd> で解除</li>
-    </ul>
+    <h2 data-i18n="popupHowTo">In aim mode</h2>
 
-    <p class="note">
-      ショートカットキー <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> でも開始・解除できます。
+    <dl class="keys">
+      <dt><kbd data-i18n="keyClick">Click</kbd></dt>
+      <dd data-i18n="howToClick">Read what you pointed at</dd>
+
+      <dt><kbd data-i18n="keyArrows">←↑↓→</kbd></dt>
+      <dd data-i18n="howToMove">Move the crosshair</dd>
+
+      <dt><kbd data-i18n="keyShiftArrows">Shift + ←↑↓→</kbd></dt>
+      <dd data-i18n="howToFine">Move the crosshair one pixel at a time</dd>
+
+      <dt><kbd data-i18n="keyEnter">Enter</kbd></dt>
+      <dd data-i18n="howToEnter">Read at the crosshair</dd>
+
+      <dt><kbd data-i18n="keyEsc">Esc</kbd></dt>
+      <dd data-i18n="howToEsc">Leave aim mode</dd>
+    </dl>
+
+    <p class="note" data-i18n="popupShortcut">
+      Alt + Shift + S enters and leaves aim mode as well.
     </p>
 
     <hr />
 
-    <p><a href="../options/options.html" target="_blank">設定を開く</a></p>
+    <p>
+      <a href="../options/options.html" target="_blank" data-i18n="popupOpenOptions">Open settings</a>
+    </p>
 
     <script type="module" src="popup.js"></script>
   </body>

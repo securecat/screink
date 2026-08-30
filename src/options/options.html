@@ -1,94 +1,70 @@
 <!doctype html>
-<html lang="ja">
+<!-- 文字列の扱いは popup.html の冒頭を参照。 -->
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>screink の設定</title>
+    <title>screink settings</title>
     <link rel="stylesheet" href="../shared/page.css" />
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
     <main>
-      <h1>screink の設定</h1>
+      <h1 data-i18n="optionsTitle">screink settings</h1>
 
-      <p class="note">変更した内容はその場で保存されます。</p>
+      <p class="note" data-i18n="optionsAutoSave">Changes are saved as you make them.</p>
 
       <form id="settings-form">
         <fieldset>
-          <legend>QRコードを探す範囲</legend>
-
-          <p class="note">
-            指定した位置を中心に、この大きさの正方形を切り出して読み取ります。単位はCSSピクセルです。QRコードは縦横比が 1:1 なので正方形で切り出します。
-          </p>
-
-          <div class="field">
-            <label for="qr-region-size">一辺の長さ</label>
-            <input
-              type="number"
-              id="qr-region-size"
-              name="qrRegionSize"
-              min="160"
-              max="2000"
-              step="20"
-              inputmode="numeric"
-            />
-            <span class="unit">px</span>
-          </div>
-
-          <p class="note">
-            この範囲で見つからなかった場合は、自動で2倍の範囲まで広げて再試行します。大きく表示されたQRコードが枠に収まらないときの対策です。
-          </p>
-        </fieldset>
-
-        <fieldset>
-          <legend>表示</legend>
-
-          <div class="field field--check">
-            <input type="checkbox" id="show-region-outline" name="showRegionOutline" />
-            <label for="show-region-outline">照準モード中に、切り出す範囲の枠を表示する</label>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>技術検証（PoC）用</legend>
+          <legend data-i18n="optionsDiagnosticsLegend">When something will not read</legend>
 
           <div class="field field--check">
             <input type="checkbox" id="open-capture-in-tab" name="openCaptureInTab" />
-            <label for="open-capture-in-tab">
-              切り出した画像を、確認を待たず新しいタブで開く
+            <label for="open-capture-in-tab" data-i18n="optionsAutoOpenLabel">
+              Open the captured image in a new tab every time
             </label>
           </div>
 
-          <p class="note">
-            off の場合も、切り出したあとに表示されるパネルのボタンから開けます。会議中にタブが切り替わるのを避けたい場合は off のままにしてください。
+          <p class="note" data-i18n="optionsAutoOpenNote">
+            You can open it any time from the panel that appears after reading, so leaving this off
+            loses nothing. Keep it off if you would rather not have tabs switch during a meeting.
           </p>
         </fieldset>
 
         <p class="status" id="status" role="status"></p>
 
         <div class="actions">
-          <button type="button" id="reset" class="secondary">既定値に戻す</button>
+          <button type="button" id="reset" class="secondary" data-i18n="optionsReset">
+            Restore defaults
+          </button>
         </div>
       </form>
 
       <hr />
 
-      <h2>ショートカットキー</h2>
-      <p>
-        照準モードの開始・解除は <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> に割り当てられています。変更するには Chrome のショートカット設定を開いてください。
+      <h2 data-i18n="optionsShortcutHeading">Keyboard shortcut</h2>
+      <p data-i18n="optionsShortcutBody">
+        Alt + Shift + S enters and leaves aim mode. Open Chrome's shortcut settings to change it.
       </p>
       <div class="actions">
-        <button type="button" id="open-shortcuts" class="secondary">
-          Chrome のショートカット設定を開く
+        <button type="button" id="open-shortcuts" class="secondary" data-i18n="optionsShortcutButton">
+          Open Chrome's shortcut settings
         </button>
       </div>
 
       <hr />
 
-      <h2>プライバシー</h2>
+      <h2 data-i18n="optionsPrivacyHeading">Privacy</h2>
       <ul>
-        <li>画像の解析はすべてブラウザ内で完結します。画像もURLも外部へ送信されません。</li>
-        <li>切り出した画像・認識結果・指した位置は保存されません。保存されるのはこのページの設定だけです。</li>
-        <li>画面を取得するのは、位置を確定した瞬間の1枚だけです。常時取得は行いません。</li>
+        <li data-i18n="optionsPrivacy1">
+          Everything happens inside your browser. No image and no URL is ever sent anywhere.
+        </li>
+        <li data-i18n="optionsPrivacy2">
+          Captured images, what was read, and where you pointed are all discarded. The only thing
+          saved is the settings on this page.
+        </li>
+        <li data-i18n="optionsPrivacy3">
+          A single frame is captured at the moment you confirm a position — never continuously.
+        </li>
       </ul>
     </main>
 

@@ -1,7 +1,7 @@
 /* popup 固有のスタイル。共通部分は ../shared/page.css を参照。 */
 
 body {
-  width: 340px;
+  width: 380px;
 }
 
 /*
@@ -13,13 +13,23 @@ h2 {
   font-size: 16px;
 }
 
-ul {
+/*
+ * キー操作の一覧。左にキー、右に説明。
+ * 文言の長さが言語で変わるため、キー側の幅は内容に合わせる。
+ */
+.keys {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
   margin: 0 0 12px;
-  padding-left: 24px;
 }
 
-li {
-  margin: 0 0 4px;
+.keys dt {
+  margin: 0;
+}
+
+.keys dd {
+  margin: 0;
 }
 
 #start {

@@ -117,20 +117,6 @@
 }
 
 /* ------------------------------------------------------------------ *
- * 切り出し領域の枠
- * ------------------------------------------------------------------ */
-.screink-region {
-  display: block !important;
-  position: fixed !important;
-  pointer-events: none !important;
-  background: transparent !important;
-  border: 2px solid var(--screink-guide-light) !important;
-  box-shadow:
-    0 0 0 2px var(--screink-guide-dark),
-    inset 0 0 0 2px var(--screink-guide-dark) !important;
-}
-
-/* ------------------------------------------------------------------ *
  * 見つかったQRコードの位置
  * 領域枠と区別できるよう、明色レイヤーに強調色を使う。
  * ------------------------------------------------------------------ */
@@ -190,6 +176,7 @@
   position: fixed !important;
   left: 50% !important;
   bottom: 24px !important;
+  top: auto !important;
   transform: translateX(-50%) !important;
   width: min(680px, calc(100vw - 32px)) !important;
   padding: 20px !important;
@@ -198,6 +185,15 @@
   border-radius: 10px !important;
   pointer-events: auto !important;
   box-shadow: 0 0 0 2px var(--screink-ui-border) !important;
+}
+
+/*
+ * 読み取った対象が画面の下半分にあるときは、パネルを上へ寄せる。
+ * せっかく見つけたQRコードを、結果パネル自身が隠してしまわないように。
+ */
+.screink-panel--top {
+  top: 60px !important;
+  bottom: auto !important;
 }
 
 .screink-panel__title {

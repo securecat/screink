@@ -38,12 +38,20 @@ PoC 期間中は `0.x.y` を使う。`1.0.0` は Chrome ウェブストア公開
 
 ## UI の言語
 
-現時点では **UI テキストは日本語のみ**（`_locales` による i18n は未対応）。
-`lang="ja"` で書くため、A11Y.md の規定により**本文・注釈とも最小 16px**。
+**英語と日本語の2言語。`_locales/{en,ja}/messages.json` に置く。既定は英語。**
 
-- **TODO**: ストア公開を目指す段階で `_locales/` + `chrome.i18n` による英日対応を入れる。
-  そのタイミングで `manifest.json` の `name` / `description` / `commands.description` も `__MSG_*__` へ置き換える。
-- `manifest.json` の `description` は現時点では英語（ストア/リポジトリ上の一次表示が英語圏向けのため）。
+- 表示文字列をソースに直接書かない。拡張ページは `data-i18n` 属性、
+  content script と JS からは `chrome.i18n.getMessage` を使う
+- **拡張ページの HTML には既定言語（英語）の文言を直書きし、それを実行時に差し替える。**
+  空要素にして実行時に埋める方式は採らない（スクリプトが動かないと何も読めないページになる）
+- `lang` 属性は `localizePage()` が実際の表示言語に合わせる
+- 文字サイズは両言語とも 16px 以上にする
+  （A11Y.md の日本語の下限に合わせておけば英語の下限も満たす）
+- 文中にキー表示（`<kbd>`）を差し込む文を作らない。言語で語順が変わり翻訳できなくなる。
+  キーと説明は別の要素に分ける
+- 英日でキーが一致していることを確認する（`work/e2e` のテストが辞書を引くため、
+  片方に無いキーがあれば落ちる）
+- `manifest.json` の `name` / `description` / `commands.description` は `__MSG_*__` を使う
 
 ---
 
@@ -53,17 +61,18 @@ CHROME_EXTENSION.md の規定構成に、このプロジェクト固有のもの
 
 ```
 /
+├── _locales/         # en / ja の messages.json
 ├── icons/
 ├── src/
-│   ├── background/   # service worker（照準モードの注入・画面キャプチャ・切り出し）
+│   ├── background/   # service worker（照準モードの注入・画面キャプチャ・切り出し・認識）
 │   ├── content/      # 照準モードのオーバーレイUI（動的注入）
-│   ├── debug/        # PoC の目視確認用の拡張ページ
+│   ├── debug/        # 読み取った画像の確認画面
 │   ├── options/
 │   ├── popup/
-│   ├── shared/       # 設定の既定値・URL検証・拡張ページ共通CSS
+│   ├── shared/       # 設定・URL検証・i18n・拡張ページ共通CSS
 │   └── vendor/       # 同梱ライブラリ（jsQR）
-├── promotion/
-└── work/             # gitignore 済み。仕様書・PoC の実験・テスト素材置き場
+├── promotion/        # ストア掲載用の素材
+└── work/             # gitignore 済み。仕様書・実験・テスト素材置き場
 ```
 
 同梱ライブラリを追加・更新するときは `src/vendor/<name>/README.md` に
@@ -90,7 +99,10 @@ ES モジュールとして使うためのラッパーが必要なら、別フ�
 - [ ] 依存ライブラリをリポジトリ内に同梱している（CDN 参照をしていない）
 - [ ] 切り出した画像・認識結果・指定位置の履歴を永続化していない
       （`chrome.storage` に入れるのは設定のみ。直近の結果は service worker のメモリ上だけ）
+- [ ] 設定の保存に `chrome.storage.local` を使っている
+      （`sync` は Google アカウント経由で端末外へ出るため使わない。PRIVACY.md の記述に関わる）
 - [ ] 画面キャプチャは、ユーザーが位置を確定した1回につき1枚だけ
+- [ ] 権限を増やしていない（`activeTab` / `scripting` / `storage` の3つのみ）
 
 ### 座標系（仕様書 §4.3）
 

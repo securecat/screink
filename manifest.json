@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "screink",
+  "name": "__MSG_extName__",
   "version": "0.2.2",
-  "description": "Turn URLs and QR codes shown in a shared screen into something you can actually click.",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -10,7 +11,7 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "screink",
+    "default_title": "__MSG_extName__",
     "default_popup": "src/popup/popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -37,7 +38,7 @@
       "suggested_key": {
         "default": "Alt+Shift+S"
       },
-      "description": "照準モードの開始 / 解除"
+      "description": "__MSG_commandToggleAimMode__"
     }
   },
   "content_security_policy": {

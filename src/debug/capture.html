@@ -1,39 +1,47 @@
 <!doctype html>
-<html lang="ja">
+<!-- 文字列の扱いは popup.html の冒頭を参照。 -->
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>screink — 切り出した画像</title>
+    <title>screink — What was captured</title>
     <link rel="stylesheet" href="../shared/page.css" />
     <link rel="stylesheet" href="capture.css" />
   </head>
   <body>
     <main>
-      <h1>切り出した画像</h1>
+      <h1 data-i18n="debugTitle">What was captured</h1>
 
-      <p class="note">
-        技術検証（PoC）用の画面です。照準モードで指定した位置、実際に切り出された範囲、認識できたQRコードの位置が一致しているかを目視で確認するために使います。
+      <p class="note" data-i18n="debugIntro">
+        This page shows what happened when something would not read. The position you pointed at,
+        the area that was actually captured, and any QR code found are drawn on top of each other.
       </p>
 
       <p class="status" id="status" role="status"></p>
 
-      <!-- 画像と候補一覧は capture.js が組み立てる（src や項目が空の要素を置かないため） -->
+      <!-- 画像と読み取り結果は capture.js が組み立てる -->
       <figure id="figure" hidden>
         <div class="stage" id="stage"></div>
         <figcaption id="caption" class="mono"></figcaption>
       </figure>
 
       <section id="results" hidden>
-        <h2>認識結果</h2>
+        <h2 data-i18n="debugResultsHeading">What was read</h2>
         <div id="candidates"></div>
       </section>
 
       <hr />
 
-      <h2>この画像の扱い</h2>
+      <h2 data-i18n="debugHandlingHeading">What happens to this image</h2>
       <ul>
-        <li>この画像はブラウザのメモリ上にだけ存在し、ファイルにも <code>chrome.storage</code> にも保存されません。</li>
-        <li>拡張が停止する（しばらく操作しない、Chrome を再起動するなど）と失われます。</li>
-        <li>外部へは送信されません。screink は外部への通信先を一切持たない構成になっています。</li>
+        <li data-i18n="debugHandling1">
+          It exists only in your browser's memory. It is never written to a file.
+        </li>
+        <li data-i18n="debugHandling2">
+          It is lost once the extension goes idle, or when Chrome restarts.
+        </li>
+        <li data-i18n="debugHandling3">
+          It is never sent anywhere. screink declares no external hosts at all.
+        </li>
       </ul>
     </main>
 

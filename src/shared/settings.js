@@ -3,12 +3,19 @@
  *
  * ここに保存するのは「設定」だけ。切り出した画像・認識結果・指した位置は
  * 永続化しない（仕様書 §8.2）。
+ *
+ * 保存先は storage.sync ではなく storage.local を使う。sync は Google アカウント
+ * 経由で端末間に同期されるため、わずかとはいえブラウザの外へ出る経路ができる。
+ * 同期する価値のある設定を持っていないので、経路を持たない方を選ぶ。
  */
 
 export const DEFAULT_SETTINGS = {
   /**
-   * QRコード用の切り出し領域の一辺（CSSピクセル）。
-   * QRは縦横比 1:1 なので正方形で切り出す（仕様書 §4.6）。
+   * QRコードを探す領域の基準の一辺（CSSピクセル）。
+   *
+   * 通常は「指した位置にある対象の輪郭」を切り出すので、この値は使わない。
+   * 輪郭が求まらなかったときの保険（指した点を中心に段階的に広げる探索）で
+   * 基準として使う。設定画面には出していない（仕様書 §4.6）。
    */
   qrRegionSize: 560,
 
@@ -18,9 +25,6 @@ export const DEFAULT_SETTINGS = {
    */
   ocrRegionWidth: 960,
   ocrRegionHeight: 200,
-
-  /** 照準モード中に切り出し領域の枠を表示する */
-  showRegionOutline: true,
 
   /**
    * 切り出した画像を、確認を待たず新しいタブで開く（PoC の目視確認用）。
@@ -47,12 +51,11 @@ function clampNumber(key, value) {
 }
 
 export async function getSettings() {
-  const stored = await chrome.storage.sync.get(DEFAULT_SETTINGS);
+  const stored = await chrome.storage.local.get(DEFAULT_SETTINGS);
   return {
     qrRegionSize: clampNumber('qrRegionSize', stored.qrRegionSize),
     ocrRegionWidth: clampNumber('ocrRegionWidth', stored.ocrRegionWidth),
     ocrRegionHeight: clampNumber('ocrRegionHeight', stored.ocrRegionHeight),
-    showRegionOutline: Boolean(stored.showRegionOutline),
     openCaptureInTab: Boolean(stored.openCaptureInTab),
   };
 }
@@ -60,11 +63,11 @@ export async function getSettings() {
 export async function saveSetting(key, value) {
   if (!(key in DEFAULT_SETTINGS)) throw new Error(`unknown setting: ${key}`);
   const normalized = key in SETTING_LIMITS ? clampNumber(key, value) : Boolean(value);
-  await chrome.storage.sync.set({ [key]: normalized });
+  await chrome.storage.local.set({ [key]: normalized });
   return normalized;
 }
 
 export async function resetSettings() {
-  await chrome.storage.sync.set(DEFAULT_SETTINGS);
+  await chrome.storage.local.set(DEFAULT_SETTINGS);
   return { ...DEFAULT_SETTINGS };
 }

@@ -32,13 +32,18 @@
     OPEN_CAPTURE_TAB: 'screink:open-capture-tab',
   };
 
+  /**
+   * 表示文字列。
+   * content script でも chrome.i18n は使えるので、拡張ページと同じ辞書を引く。
+   */
+  const t = (key, substitutions) => chrome.i18n.getMessage(key, substitutions);
+
   /** 矢印キー1回の移動量（CSSピクセル）。Shift 併用で微調整。 */
   const KEY_STEP = 8;
   const KEY_STEP_FINE = 1;
 
   const FALLBACK_SETTINGS = {
     qrRegionSize: 560,
-    showRegionOutline: true,
     openCaptureInTab: false,
   };
 
@@ -67,29 +72,17 @@
     return node;
   }
 
-  function keyCap(label) {
-    const kbd = el('kbd', 'screink-key');
-    kbd.textContent = label;
-    return kbd;
-  }
-
   function buildBar() {
     const bar = el('div', 'screink-bar');
 
     const name = el('span', 'screink-bar__name');
-    name.textContent = 'screink 照準モード';
+    name.textContent = t('overlayBarName');
     bar.append(name);
 
+    // 案内文は1つの文にしている。文中にキー表示を差し込むと、
+    // 言語ごとに語順が変わるため翻訳できる形にならない。
     const hint = el('span', 'screink-bar__hint');
-    hint.append(
-      document.createTextNode('　クリック、または '),
-      keyCap('←↑↓→'),
-      document.createTextNode(' で位置を指定して '),
-      keyCap('Enter'),
-      document.createTextNode('　'),
-      keyCap('Esc'),
-      document.createTextNode(' で解除'),
-    );
+    hint.textContent = `　${t('overlayBarHint')}`;
     bar.append(hint);
 
     return bar;
@@ -98,7 +91,7 @@
   function buildPanel() {
     const panel = el('section', 'screink-panel');
     panel.setAttribute('role', 'group');
-    panel.setAttribute('aria-label', 'screink の読み取り結果');
+    panel.setAttribute('aria-label', t('overlayPanelLabel'));
     panel.hidden = true;
 
     const title = el('h2', 'screink-panel__title');
@@ -109,7 +102,7 @@
 
     const destination = el('p', 'screink-panel__destination');
     const destinationLabel = el('span', 'screink-panel__label');
-    destinationLabel.textContent = '開く先';
+    destinationLabel.textContent = t('overlayDestination');
     const destinationHost = el('span', 'screink-panel__host');
     destination.append(destinationLabel, destinationHost);
 
@@ -124,27 +117,27 @@
 
     const openButton = el('button', 'screink-button');
     openButton.type = 'button';
-    openButton.textContent = '新しいタブで開く';
+    openButton.textContent = t('overlayOpen');
 
     const copyButton = el('button', 'screink-button screink-button--secondary');
     copyButton.type = 'button';
-    copyButton.textContent = 'テキストをコピー';
+    copyButton.textContent = t('overlayCopyText');
 
     const nextButton = el('button', 'screink-button screink-button--secondary');
     nextButton.type = 'button';
-    nextButton.textContent = '次の候補';
+    nextButton.textContent = t('overlayNext');
 
     const retryButton = el('button', 'screink-button screink-button--secondary');
     retryButton.type = 'button';
-    retryButton.textContent = 'もう一度指す';
+    retryButton.textContent = t('overlayRetry');
 
     const debugButton = el('button', 'screink-button screink-button--secondary');
     debugButton.type = 'button';
-    debugButton.textContent = '切り出した画像を確認する';
+    debugButton.textContent = t('overlayInspect');
 
     const closeButton = el('button', 'screink-button screink-button--secondary');
     closeButton.type = 'button';
-    closeButton.textContent = '閉じる';
+    closeButton.textContent = t('overlayClose');
 
     actions.append(openButton, copyButton, nextButton, retryButton, debugButton, closeButton);
     panel.append(title, body, destination, payload, note, status, actions);
@@ -175,20 +168,19 @@
     // フォーカスインジケーターはビューポートを囲む枠として CSS 側で描く。
     catcher.tabIndex = -1;
     catcher.setAttribute('role', 'application');
-    catcher.setAttribute('aria-label', 'screink 照準モード：位置を指定してください');
+    catcher.setAttribute('aria-label', t('overlayCatcherLabel'));
 
     const crossV = el('div', 'screink-crosshair screink-crosshair--v');
     const crossH = el('div', 'screink-crosshair screink-crosshair--h');
-    const region = el('div', 'screink-region');
     const found = el('div', 'screink-found');
     found.hidden = true;
 
     const bar = buildBar();
     const panelParts = buildPanel();
 
-    root.append(catcher, region, found, crossV, crossH, bar, panelParts.panel);
+    root.append(catcher, found, crossV, crossH, bar, panelParts.panel);
 
-    return { root, catcher, crossV, crossH, region, found, bar, ...panelParts };
+    return { root, catcher, crossV, crossH, found, bar, ...panelParts };
   }
 
   /* ---------------------------------------------------------------- *
@@ -271,23 +263,37 @@
     renderGuides();
   }
 
+  /*
+   * 照準は十字だけにしている。
+   *
+   * 以前は「探す範囲」を四角い枠で示していたが、読み取りが
+   * 「指した位置にある対象の輪郭を読む」方式に変わったことで、
+   * 枠は実態と合わなくなった（枠の外でも、その上を指せば読める。
+   * 枠の中でも、指していなければ読まない）。
+   * 誤解を招く情報なので出さない。仕様書 §4.6 を参照。
+   */
   function renderGuides() {
     if (!ui) return;
-
     ui.crossV.style.left = `${pointer.x}px`;
     ui.crossH.style.top = `${pointer.y}px`;
+  }
 
-    const region = squareRegion(settings.qrRegionSize);
-    ui.region.hidden = !settings.showRegionOutline;
-    ui.region.style.left = `${region.x}px`;
-    ui.region.style.top = `${region.y}px`;
-    ui.region.style.width = `${region.width}px`;
-    ui.region.style.height = `${region.height}px`;
+  /**
+   * 結果パネルを、読み取った対象と反対側へ置く。
+   * 見つけたものをパネル自身が隠してしまうと、確認のしようがない。
+   */
+  function placePanel(bboxCss) {
+    if (!ui) return;
+    const inLowerHalf = bboxCss
+      ? bboxCss.y + bboxCss.height / 2 > window.innerHeight / 2
+      : false;
+    ui.panel.classList.toggle('screink-panel--top', inLowerHalf);
   }
 
   /** 見つかったQRコードの位置を画面上に示す。 */
   function renderFoundBox(bboxCss) {
     if (!ui) return;
+    placePanel(bboxCss);
     if (!bboxCss) {
       ui.found.hidden = true;
       return;
@@ -389,7 +395,6 @@
     ui.catcher.hidden = true;
     ui.crossV.hidden = true;
     ui.crossH.hidden = true;
-    ui.region.hidden = true;
     ui.bar.hidden = true;
   }
 
@@ -436,18 +441,18 @@
     renderFoundBox(candidate.bboxCss);
 
     const isUrl = candidate.kind === 'url';
-    ui.title.textContent = isUrl
-      ? 'QRコードを読み取りました'
-      : 'QRコードのテキストを読み取りました';
+    ui.title.textContent = t(isUrl ? 'overlayTitleUrl' : 'overlayTitleText');
 
     const parts = [];
     if (candidates.length > 1) {
-      parts.push(`候補 ${candidateIndex + 1} / ${candidates.length} 件`);
+      parts.push(
+        t('overlayCandidateCount', [String(candidateIndex + 1), String(candidates.length)]),
+      );
     }
     if (!candidate.containsPoint) {
-      parts.push('指した位置から少し離れた場所にあります');
+      parts.push(t('overlayFarFromPoint'));
     }
-    ui.body.textContent = parts.join('。');
+    ui.body.textContent = parts.join(' / ');
     ui.body.hidden = parts.length === 0;
 
     if (isUrl) {
@@ -465,7 +470,7 @@
 
     ui.openButton.hidden = !isUrl;
     ui.copyButton.hidden = false;
-    ui.copyButton.textContent = isUrl ? 'URLをコピー' : 'テキストをコピー';
+    ui.copyButton.textContent = t(isUrl ? 'overlayCopyUrl' : 'overlayCopyText');
     ui.nextButton.hidden = candidates.length <= 1;
     ui.retryButton.hidden = false;
     ui.debugButton.hidden = false;
@@ -476,13 +481,12 @@
 
   function showNotFound(response) {
     renderFoundBox(null);
-    ui.title.textContent = 'QRコードを見つけられませんでした';
-    ui.body.textContent =
-      'QRコードの上を指しているか確認してください。切り出す範囲は設定画面から広げられます。';
+    ui.title.textContent = t('overlayTitleNotFound');
+    ui.body.textContent = t('overlayBodyNotFound');
     ui.body.hidden = false;
     ui.destination.hidden = true;
     ui.payload.hidden = true;
-    ui.note.textContent = `${response.engine} / ${response.elapsedMs} ms / 試した範囲 ${response.attemptCount} 段階`;
+    ui.note.textContent = `${response.engine} / ${response.elapsedMs} ms`;
     ui.note.hidden = false;
 
     ui.openButton.hidden = true;
@@ -497,7 +501,7 @@
 
   function showFailure(message, detail) {
     renderFoundBox(null);
-    ui.title.textContent = '読み取れませんでした';
+    ui.title.textContent = t('overlayTitleFailed');
     ui.body.textContent = message;
     ui.body.hidden = false;
     ui.destination.hidden = true;
@@ -518,13 +522,13 @@
   function describeFailure(response) {
     switch (response?.reason) {
       case 'no-active-tab':
-        return 'アクティブなタブを特定できませんでした。';
+        return t('errorNoTab');
       case 'capture-failed':
-        return '画面を取得できませんでした。タブが表示されているか確認してください。';
+        return t('overlayFailCapture');
       case 'messaging-failed':
-        return '拡張の内部通信に失敗しました。拡張を再読み込みしてください。';
+        return t('overlayFailMessaging');
       default:
-        return '原因を特定できませんでした。';
+        return t('overlayFailUnknown');
     }
   }
 
@@ -560,8 +564,8 @@
     }
     ui.status.textContent =
       response?.reason === 'unsafe-url'
-        ? 'このURLは開けません（http / https 以外は開かない仕様です）。'
-        : 'URLを開けませんでした。';
+        ? t('overlayUnsafeUrl')
+        : t('overlayOpenFailed');
   }
 
   async function copyCandidate() {
@@ -571,11 +575,11 @@
 
     try {
       await navigator.clipboard.writeText(text);
-      ui.status.textContent = 'コピーしました。';
+      ui.status.textContent = t('overlayCopied');
     } catch {
       // ページの権限ポリシーでクリップボードが使えないことがある。
       // その場合は手で選択してもらう（テキストは選択可能にしてある）。
-      ui.status.textContent = 'コピーできませんでした。上のテキストを選択してコピーしてください。';
+      ui.status.textContent = t('overlayCopyFailed');
     }
   }
 
@@ -590,7 +594,7 @@
     try {
       await chrome.runtime.sendMessage({ type: MESSAGES.OPEN_CAPTURE_TAB });
     } catch (error) {
-      ui.status.textContent = '切り出した画像を開けませんでした。';
+      ui.status.textContent = t('overlayInspectFailed');
       console.warn('[screink] 切り出し画像を開けませんでした:', error);
     }
   }

@@ -1,20 +1,24 @@
+import { localizePage, t } from '../shared/i18n.js';
+
+localizePage();
+
 const startButton = document.querySelector('#start');
 const statusText = document.querySelector('#status');
 
 function describeFailure(response) {
   switch (response?.reason) {
     case 'no-active-tab':
-      return 'アクティブなタブを特定できませんでした。';
+      return t('errorNoTab');
     case 'injection-failed':
-      return 'このページでは照準モードを使えません。Chrome の設定ページや拡張機能ページ、Chrome ウェブストアでは動作しません。';
+      return t('errorInjection');
     default:
-      return '照準モードを開始できませんでした。';
+      return t('errorStartFailed');
   }
 }
 
 startButton.addEventListener('click', async () => {
   // 進行中であることを伝える。メッセージは自動では消さない。
-  statusText.textContent = '照準モードを開始しています…';
+  statusText.textContent = t('popupStarting');
 
   let response;
   try {
