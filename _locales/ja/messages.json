@@ -1,5 +1,5 @@
 {
-  "extName": { "message": "screink" },
+  "extName": { "message": "スクリーンク" },
   "extDescription": {
     "message": "Webページ中のQRコードをクリックできるようになります。Teams、Google Meet、Zoomの共有画面にも対応。"
   },
@@ -33,7 +33,7 @@
   },
   "errorStartFailed": { "message": "照準モードを開始できませんでした。" },
 
-  "optionsTitle": { "message": "screink の設定" },
+  "optionsTitle": { "message": "スクリーンクの設定" },
   "optionsAutoSave": { "message": "変更した内容はその場で保存されます。" },
   "optionsDiagnosticsLegend": { "message": "読み取れないときの確認" },
   "optionsAutoOpenLabel": {
@@ -98,17 +98,17 @@
     "message": "しばらく操作しない、Chrome を再起動するなどで失われます。"
   },
   "debugHandling3": {
-    "message": "外部へは送信されません。screink は外部への通信先を一切持たない構成になっています。"
+    "message": "外部へは送信されません。スクリーンクは外部への通信先を一切持たない構成になっています。"
   },
 
-  "overlayBarName": { "message": "screink 照準モード" },
+  "overlayBarName": { "message": "スクリーンク 照準モード" },
   "overlayBarHint": {
     "message": "クリック、または矢印キーと Enter で位置を指定します。Esc で解除。"
   },
   "overlayCatcherLabel": {
-    "message": "screink 照準モード：読み取りたいQRコードを指してください"
+    "message": "スクリーンク 照準モード：読み取りたいQRコードを指してください"
   },
-  "overlayPanelLabel": { "message": "screink の読み取り結果" },
+  "overlayPanelLabel": { "message": "スクリーンクの読み取り結果" },
   "overlayDestination": { "message": "開く先" },
   "overlayTitleUrl": { "message": "QRコードを読み取りました" },
   "overlayTitleText": { "message": "QRコードのテキストを読み取りました" },

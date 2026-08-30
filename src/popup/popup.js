@@ -1,6 +1,6 @@
 import { localizePage, t } from '../shared/i18n.js';
 
-localizePage();
+localizePage('extName');
 
 const startButton = document.querySelector('#start');
 const statusText = document.querySelector('#status');
