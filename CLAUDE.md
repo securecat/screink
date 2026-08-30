@@ -38,20 +38,31 @@ PoC 期間中は `0.x.y` を使う。`1.0.0` は Chrome ウェブストア公開
 
 ## UI の言語
 
-**英語と日本語の2言語。`_locales/{en,ja}/messages.json` に置く。既定は英語。**
+**英語と日本語の2言語。文言は `src/shared/messages.js` に置く。
+既定はブラウザのUI言語で、オプション設定で選べる。**
 
 - 表示文字列をソースに直接書かない。拡張ページは `data-i18n` 属性、
-  content script と JS からは `chrome.i18n.getMessage` を使う
+  JS からは `src/shared/i18n.js` の `t()` を使う
+- **`chrome.i18n.getMessage()` は使わない。** ブラウザのUI言語で固定されていて、
+  オプション設定の表示言語に従えない。`chrome.i18n` を使うのは、既定の言語を決める
+  `getUILanguage()` だけ（`detectUiLanguage()`）
+- content script（照準モードのオーバーレイ）は classic script で import できないため、
+  service worker が注入の直前に、選ばれている言語の辞書を isolated world へ置く
+  （`startAimMode()`）。新しい注入経路を足すときはここを忘れない
+- `_locales/{en,ja}/messages.json` に残すのは、`manifest.json` の `__MSG_*__` が参照する
+  3キーだけ（`extName` / `extDescription` / `commandStartAimMode`）。
+  **これらは Chrome がブラウザのUI言語で解決するため、オプション設定では切り替わらない**
 - **拡張ページの HTML には既定言語（英語）の文言を直書きし、それを実行時に差し替える。**
   空要素にして実行時に埋める方式は採らない（スクリプトが動かないと何も読めないページになる）
+- 拡張ページは、まずブラウザのUI言語で `localizePage()` してから、設定を読んで作り直す。
+  設定の読み込みは非同期なので、待ってから差し替えると日本語環境で英語が一瞬見える
 - `lang` 属性は `localizePage()` が実際の表示言語に合わせる
 - 文字サイズは両言語とも 16px 以上にする
   （A11Y.md の日本語の下限に合わせておけば英語の下限も満たす）
 - 文中にキー表示（`<kbd>`）を差し込む文を作らない。言語で語順が変わり翻訳できなくなる。
   キーと説明は別の要素に分ける
-- 英日でキーが一致していることを確認する（`work/e2e` のテストが辞書を引くため、
-  片方に無いキーがあれば落ちる）
-- `manifest.json` の `name` / `description` / `commands.description` は `__MSG_*__` を使う
+- 英日でキーが一致していることを確認する（`work/e2e` の `loadDictionary()` が
+  突き合わせるため、片方に無いキーがあれば落ちる）
 
 ---
 
@@ -61,7 +72,7 @@ CHROME_EXTENSION.md の規定構成に、このプロジェクト固有のもの
 
 ```
 /
-├── _locales/         # en / ja の messages.json
+├── _locales/         # manifest 用の3キーのみ（拡張名・説明・コマンドの説明）
 ├── icons/
 ├── src/
 │   ├── background/   # service worker（照準モードの注入・画面キャプチャ・切り出し・認識）
@@ -69,7 +80,7 @@ CHROME_EXTENSION.md の規定構成に、このプロジェクト固有のもの
 │   ├── debug/        # 読み取った画像の確認画面
 │   ├── options/
 │   ├── popup/
-│   ├── shared/       # 設定・URL検証・i18n・拡張ページ共通CSS
+│   ├── shared/       # 設定・URL検証・表示言語と文言の辞書・拡張ページ共通CSS
 │   └── vendor/       # 同梱ライブラリ（jsQR）
 ├── promotion/        # ストア掲載用の素材
 └── work/             # gitignore 済み。仕様書・実験・テスト素材置き場

@@ -13,7 +13,8 @@
  * innerHTML への代入が例外になるため、DOM API のみで組み立てる（仕様書 §4.4）。
  *
  * このファイルは ES モジュールとして読み込めないため（executeScript の files は
- * classic script）、設定は service worker からメッセージで受け取る。
+ * classic script）、設定は service worker からメッセージで受け取り、
+ * 表示文字列の辞書は注入の直前に service worker が置いていく。
  */
 
 (() => {
@@ -34,9 +35,20 @@
 
   /**
    * 表示文字列。
-   * content script でも chrome.i18n は使えるので、拡張ページと同じ辞書を引く。
+   *
+   * chrome.i18n は使わない。ブラウザのUI言語で固定されていて、オプション設定の
+   * 表示言語に従えないため。service worker が注入の直前に、選ばれている言語の
+   * 辞書をこの isolated world へ置いている（service-worker.js の `startAimMode`）。
+   *
+   * 差し込みは chrome.i18n と同じ `$1` / `$2` の記法。
    */
-  const t = (key, substitutions) => chrome.i18n.getMessage(key, substitutions);
+  const t = (key, substitutions = []) => {
+    const template = window.__screinkMessages?.[key] ?? '';
+    return substitutions.reduce(
+      (text, value, index) => text.split(`$${index + 1}`).join(value),
+      template,
+    );
+  };
 
   /** 矢印キー1回の移動量（CSSピクセル）。Shift 併用で微調整。 */
   const KEY_STEP = 8;

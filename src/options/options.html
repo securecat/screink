@@ -13,6 +13,28 @@
 
       <p class="note" data-i18n="optionsAutoSave">Changes are saved as you make them.</p>
 
+      <!--
+        ラジオのグループ名は fieldset / legend で与える。legend の中に見出しを置けるので
+        （HTML の legend は heading content を許す）、他の節と同じ h2 の見出しのまま、
+        グループとしての名前も付く。role="radiogroup" を自分で書く必要はない。
+
+        なお、拡張名・拡張の説明・ショートカットキーの説明は manifest 由来のため、
+        ここで選んだ言語では切り替わらない（Chrome がブラウザのUI言語で解決する）。
+      -->
+      <fieldset class="group">
+        <legend><h2 data-i18n="optionsLanguageHeading">UI language</h2></legend>
+
+        <div class="field field--radios">
+          <input type="radio" id="ui-language-en" name="uiLanguage" value="en" />
+          <label for="ui-language-en" data-i18n="optionsLanguageEnglish">English</label>
+
+          <input type="radio" id="ui-language-ja" name="uiLanguage" value="ja" />
+          <label for="ui-language-ja" data-i18n="optionsLanguageJapanese">Japanese</label>
+
+          <span class="save-status" id="language-status" role="status"></span>
+        </div>
+      </fieldset>
+
       <h2 data-i18n="optionsDiagnosticsLegend">When something will not read</h2>
 
       <p class="note" data-i18n="optionsAutoOpenNote">

@@ -18,6 +18,9 @@
  */
 
 import { AIM_MODE_COMMAND } from '../shared/commands.js';
+import { resolveLanguage } from '../shared/i18n.js';
+// このファイルの MESSAGES は拡張内部のメッセージ種別なので、表示文字列の辞書は別名で取る
+import { MESSAGES as DICTIONARIES } from '../shared/messages.js';
 import { getSettings } from '../shared/settings.js';
 import { toSafeUrl } from '../shared/url.js';
 import jsQR from '../vendor/jsqr/index.js';
@@ -101,10 +104,29 @@ let lastCapture = null;
  * 起動しても、解除ではなく次の照準モードが始まる。解除は Esc だけとする。
  */
 async function startAimMode(tabId) {
+  const settings = await getSettings().catch(() => ({ uiLanguage: '' }));
+  const language = resolveLanguage(settings.uiLanguage);
+
   await chrome.scripting.insertCSS({
     target: { tabId, allFrames: false },
     files: ['src/content/aim-mode.css'],
   });
+
+  /*
+   * オーバーレイの文言は、選ばれている言語の辞書を先に置いてから渡す。
+   *
+   * aim-mode.js は classic script として注入されるため import できず、
+   * chrome.i18n はブラウザのUI言語で固定されていて設定に従えない。
+   * 注入先は isolated world なので、ページ側からは見えない。
+   */
+  await chrome.scripting.executeScript({
+    target: { tabId, allFrames: false },
+    func: (dictionary) => {
+      window.__screinkMessages = dictionary;
+    },
+    args: [DICTIONARIES[language]],
+  });
+
   await chrome.scripting.executeScript({
     target: { tabId, allFrames: false },
     files: ['src/content/aim-mode.js'],

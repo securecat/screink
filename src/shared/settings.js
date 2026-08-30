@@ -11,6 +11,18 @@
 
 export const DEFAULT_SETTINGS = {
   /**
+   * 拡張の表示言語（`'en'` / `'ja'`）。
+   *
+   * 既定は空文字＝未設定で、そのときはブラウザのUI言語に合わせる
+   * （`src/shared/i18n.js` の `resolveLanguage`）。オプション設定で選ぶと、
+   * 以降はブラウザの言語に関係なく選んだ言語で表示する。
+   *
+   * なお、拡張名・説明・ショートカットキーの説明（manifest.json の `__MSG_*__`）は
+   * Chrome がブラウザのUI言語で解決するため、この設定では切り替わらない。
+   */
+  uiLanguage: '',
+
+  /**
    * QRコードを探す領域の基準の一辺（CSSピクセル）。
    *
    * 通常は「指した位置にある対象の輪郭」を切り出すので、この値は使わない。
@@ -40,6 +52,11 @@ export const SETTING_LIMITS = {
   ocrRegionHeight: { min: 80, max: 4000 },
 };
 
+/** 表示言語は 'en' / 'ja' のみ受け付ける。それ以外は未設定（＝ブラウザに合わせる）とする。 */
+function normalizeLanguage(value) {
+  return value === 'en' || value === 'ja' ? value : '';
+}
+
 /** 数値設定を範囲内に収める。不正値は既定値へ戻す。 */
 function clampNumber(key, value) {
   const limits = SETTING_LIMITS[key];
@@ -53,6 +70,7 @@ function clampNumber(key, value) {
 export async function getSettings() {
   const stored = await chrome.storage.local.get(DEFAULT_SETTINGS);
   return {
+    uiLanguage: normalizeLanguage(stored.uiLanguage),
     qrRegionSize: clampNumber('qrRegionSize', stored.qrRegionSize),
     ocrRegionWidth: clampNumber('ocrRegionWidth', stored.ocrRegionWidth),
     ocrRegionHeight: clampNumber('ocrRegionHeight', stored.ocrRegionHeight),
@@ -60,9 +78,15 @@ export async function getSettings() {
   };
 }
 
+function normalizeSetting(key, value) {
+  if (key === 'uiLanguage') return normalizeLanguage(value);
+  if (key in SETTING_LIMITS) return clampNumber(key, value);
+  return Boolean(value);
+}
+
 export async function saveSetting(key, value) {
   if (!(key in DEFAULT_SETTINGS)) throw new Error(`unknown setting: ${key}`);
-  const normalized = key in SETTING_LIMITS ? clampNumber(key, value) : Boolean(value);
+  const normalized = normalizeSetting(key, value);
   await chrome.storage.local.set({ [key]: normalized });
   return normalized;
 }

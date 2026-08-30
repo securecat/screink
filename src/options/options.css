@@ -26,6 +26,32 @@ h2 {
 }
 
 /*
+ * ラジオのグループ。名前は legend が与える（中に h2 を置いてあるので、
+ * 他の節と同じ見出しのままグループ名にもなっている）。
+ * fieldset 自身の枠と余白は、見た目を他の節と揃えるために落とす。
+ */
+.group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.group > legend {
+  padding: 0;
+}
+
+.field--radios {
+  align-items: center;
+  gap: 8px;
+}
+
+/* 次の選択肢との間は、ラジオとそのラベルの間より広くとる */
+.field--radios label + input {
+  margin-left: 20px;
+}
+
+/*
  * 保存できたことの表示。ラベルと同じ行に置くので、
  * 出ても消えても以降のレイアウトが動かない。
  * 色だけに意味を持たせない（文言そのものが結果を伝えている）。

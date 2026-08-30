@@ -5,8 +5,12 @@
  * 画像は service worker のメモリ上にある直近の結果を受け取るだけで、保存しない。
  */
 
-import { localizePage, t } from '../shared/i18n.js';
+import { localizePage, setLanguage, t } from '../shared/i18n.js';
+import { getSettings } from '../shared/settings.js';
 
+// まずブラウザのUI言語で組み立て、設定を読んでから作り直す（popup.js と同じ）
+localizePage('debugTitle');
+setLanguage((await getSettings().catch(() => ({}))).uiLanguage);
 localizePage('debugTitle');
 
 const statusText = document.querySelector('#status');
