@@ -1,6 +1,17 @@
 import { localizePage, t } from '../shared/i18n.js';
+import { getAimModeShortcut } from '../shared/commands.js';
 
 localizePage('extName');
+
+/*
+ * ショートカットキーの表記は、実際の割り当てから作る。
+ * manifest の suggested_key は希望でしかなく、衝突すれば割り当てられないし、
+ * ユーザーが変更することもある。直書きすると表示が嘘になる。
+ */
+const shortcut = await getAimModeShortcut();
+document.querySelector('#shortcut').textContent = shortcut
+  ? t('popupShortcut', [shortcut])
+  : t('popupShortcutNone');
 
 const startButton = document.querySelector('#start');
 const statusText = document.querySelector('#status');

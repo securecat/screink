@@ -42,8 +42,9 @@
       <hr />
 
       <h2 data-i18n="optionsShortcutHeading">Keyboard shortcut</h2>
-      <p data-i18n="optionsShortcutBody">
-        Alt + Shift + S enters and leaves aim mode. Open Chrome's shortcut settings to change it.
+      <!-- 実際の割り当ては options.js が chrome.commands から取って差し替える -->
+      <p id="shortcut">
+        Alt+Shift+S enters and leaves aim mode. Open Chrome's shortcut settings to change it.
       </p>
       <div class="actions">
         <button type="button" id="open-shortcuts" class="secondary" data-i18n="optionsShortcutButton">

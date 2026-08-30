@@ -11,7 +11,11 @@
   "popupStart": { "message": "Enter aim mode" },
   "popupHowTo": { "message": "In aim mode" },
   "popupShortcut": {
-    "message": "Alt + Shift + S enters and leaves aim mode as well."
+    "message": "$1 enters and leaves aim mode as well.",
+    "placeholders": { "1": { "content": "$1" } }
+  },
+  "popupShortcutNone": {
+    "message": "No keyboard shortcut is assigned. You can set one from the settings."
   },
   "popupOpenOptions": { "message": "Open settings" },
   "popupStarting": { "message": "Entering aim mode…" },
@@ -48,7 +52,11 @@
   "optionsSavedOff": { "message": "Saved, turned off." },
   "optionsShortcutHeading": { "message": "Keyboard shortcut" },
   "optionsShortcutBody": {
-    "message": "Alt + Shift + S enters and leaves aim mode. Open Chrome's shortcut settings to change it."
+    "message": "$1 enters and leaves aim mode. Open Chrome's shortcut settings to change it.",
+    "placeholders": { "1": { "content": "$1" } }
+  },
+  "optionsShortcutNone": {
+    "message": "No keyboard shortcut is assigned for entering and leaving aim mode. You can set one in Chrome's shortcut settings."
   },
   "optionsShortcutButton": { "message": "Open Chrome's shortcut settings" },
   "optionsPrivacyHeading": { "message": "Privacy" },

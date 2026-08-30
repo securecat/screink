@@ -1,7 +1,14 @@
 import { DEFAULT_SETTINGS, getSettings, saveSetting, resetSettings } from '../shared/settings.js';
 import { localizePage, t } from '../shared/i18n.js';
+import { getAimModeShortcut } from '../shared/commands.js';
 
 localizePage('optionsTitle');
+
+// ショートカットキーの表記は実際の割り当てから作る（popup.js と同じ理由）
+const shortcut = await getAimModeShortcut();
+document.querySelector('#shortcut').textContent = shortcut
+  ? t('optionsShortcutBody', [shortcut])
+  : t('optionsShortcutNone');
 
 const form = document.querySelector('#settings-form');
 const statusText = document.querySelector('#status');

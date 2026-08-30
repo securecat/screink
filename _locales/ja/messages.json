@@ -11,7 +11,11 @@
   "popupStart": { "message": "照準モードを開始" },
   "popupHowTo": { "message": "照準モード中の操作" },
   "popupShortcut": {
-    "message": "ショートカットキー Alt + Shift + S でも開始・解除できます。"
+    "message": "ショートカットキー $1 でも開始・解除できます。",
+    "placeholders": { "1": { "content": "$1" } }
+  },
+  "popupShortcutNone": {
+    "message": "ショートカットキーは割り当てられていません。設定から割り当てられます。"
   },
   "popupOpenOptions": { "message": "設定を開く" },
   "popupStarting": { "message": "照準モードを開始しています…" },
@@ -48,7 +52,11 @@
   "optionsSavedOff": { "message": "off にして保存しました。" },
   "optionsShortcutHeading": { "message": "ショートカットキー" },
   "optionsShortcutBody": {
-    "message": "照準モードの開始・解除は Alt + Shift + S に割り当てられています。変更するには Chrome のショートカット設定を開いてください。"
+    "message": "照準モードの開始・解除は $1 に割り当てられています。変更するには Chrome のショートカット設定を開いてください。",
+    "placeholders": { "1": { "content": "$1" } }
+  },
+  "optionsShortcutNone": {
+    "message": "照準モードの開始・解除に、ショートカットキーは割り当てられていません。Chrome のショートカット設定から割り当てられます。"
   },
   "optionsShortcutButton": { "message": "Chrome のショートカット設定を開く" },
   "optionsPrivacyHeading": { "message": "プライバシー" },
