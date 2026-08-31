@@ -16,7 +16,9 @@ screink does not depend on the internals of any particular meeting service. The 
 
 ### Chrome Web Store
 
-(Coming soon)
+https://chromewebstore.google.com/detail/screink/jlcokpeegaghadhdfjaoeaoibfgbembn
+
+> The Chrome Web Store version may lag behind the repository during the review process.
 
 ### Developer Mode (Manual Install)
 
@@ -82,7 +84,9 @@ TeamsやGoogle Meet、Zoomなどをブラウザで使っているとき、参加
 
 ### Chrome ウェブストア
 
-準備中
+https://chromewebstore.google.com/detail/screink/jlcokpeegaghadhdfjaoeaoibfgbembn
+
+> Chrome ウェブストア版は、審査中のため最新リリースより古い場合があります。
 
 ### デベロッパーモード（手動インストール）
 
