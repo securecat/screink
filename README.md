@@ -35,6 +35,8 @@ https://chromewebstore.google.com/detail/screink/jlcokpeegaghadhdfjaoeaoibfgbemb
    - Click it, or
    - Move the crosshair with the arrow keys and press `Enter`
 4. Check the URL screink found, and open it
+   - With direct links on, it opens in a new tab without asking
+   - If the QR code carries text rather than a URL, the panel appears even with direct links on
 5. Press `Esc` at any time to leave aim mode
 
 Ordinary clicks are never taken away. screink receives the click only while aim mode is on, so it cannot interfere with the meeting UI underneath.
@@ -110,6 +112,8 @@ https://chromewebstore.google.com/detail/screink/jlcokpeegaghadhdfjaoeaoibfgbemb
    - クリックする、または
    - 矢印キーで照準を動かして `Enter` を押す
 4. スクリーンクが見つけたURLを確認して開く
+   - ダイレクトリンクをONにしている時は、確認を挟まず新しいタブで開きます
+   - QRコードの内容がテキストデータの場合は、ダイレクトリンクがONでも確認パネルを表示します
 5. `Esc` を押せばいつでも照準モードを解除できます
 
 通常のクリックを奪うことはありません。スクリーンクがクリックを受け取るのは照準モード中だけなので、その下にある会議UIの操作を妨げません。
