@@ -44,7 +44,7 @@ export function setLanguage(value) {
 
 /**
  * 差し込みは chrome.i18n と同じ形にしてある。
- *   t('popupShortcut', ['Alt+Shift+S']) -> "Alt+Shift+S enters aim mode as well."
+ *   t('optionsShortcutBody', ['Alt+Shift+S']) -> "Alt+Shift+S enters aim mode. ..."
  */
 export function t(key, substitutions = []) {
   const template = MESSAGES[language]?.[key] ?? MESSAGES.en[key] ?? '';

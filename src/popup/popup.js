@@ -1,5 +1,4 @@
 import { localizePage, setLanguage, t } from '../shared/i18n.js';
-import { getAimModeShortcut } from '../shared/commands.js';
 import { getSettings, saveSetting } from '../shared/settings.js';
 
 /*
@@ -8,26 +7,30 @@ import { getSettings, saveSetting } from '../shared/settings.js';
  */
 localizePage('extName');
 
-// 表示言語はオプション設定に従う。読めなければブラウザのUI言語のまま進む。
-const settings = await getSettings().catch(() => ({}));
-setLanguage(settings.uiLanguage);
-localizePage('extName');
-
 const startButton = document.querySelector('#start');
 const statusText = document.querySelector('#status');
 
 /*
  * ダイレクトリンク。照準モードを開始する前に決められるよう、
  * オプションページではなくここに置いている（使うたびに切り替わりうる設定のため）。
- *
- * 設定を読んだ直後に、状態の反映とハンドラの登録を済ませる。
- * この先には await があるので、後ろに回すと「操作はできるが保存されない」
- * 短い時間ができてしまう。
  */
 const directLink = document.querySelector('#direct-link');
-directLink.checked = Boolean(settings.directLink);
 
+/**
+ * ユーザーがチェックボックスを操作したか。
+ *
+ * ポップアップは開いた直後に押される。設定の読み込み（この下の await）より先に
+ * 押されることもあり、そのとき読み込み結果で状態を上書きすると、押したはずの
+ * チェックが黙って戻る。操作されていたら上書きしない。
+ */
+let touched = false;
+
+/*
+ * 操作を受け付ける準備は、設定の読み込みより先に済ませる。
+ * await の後ろに回すと「押せるのに何も起きない」瞬間ができる。
+ */
 directLink.addEventListener('change', async () => {
+  touched = true;
   try {
     await saveSetting('directLink', directLink.checked);
   } catch (error) {
@@ -37,19 +40,6 @@ directLink.addEventListener('change', async () => {
     console.warn('[screink] 設定を保存できませんでした:', error);
   }
 });
-
-/*
- * ショートカットキーの表記は、実際の割り当てから作る。
- * manifest の suggested_key は希望でしかなく、衝突すれば割り当てられないし、
- * ユーザーが変更することもある。直書きすると表示が嘘になる。
- *
- * 取得できるまでは「未設定」として出しておく（英語のまま置くより実態に近い）。
- */
-const shortcutText = document.querySelector('#shortcut');
-shortcutText.textContent = t('popupShortcutNone');
-
-const shortcut = await getAimModeShortcut();
-if (shortcut) shortcutText.textContent = t('popupShortcut', [shortcut]);
 
 function describeFailure(response) {
   switch (response?.reason) {
@@ -81,3 +71,15 @@ startButton.addEventListener('click', async () => {
 
   statusText.textContent = describeFailure(response);
 });
+
+/*
+ * ショートカットキーの案内はここには置かない。
+ * 割り当てた本人はそのキーを知っているし、割り当てられること自体は
+ * オプション設定に書いてある。ポップアップは開始の操作に絞る。
+ */
+
+// 表示言語はオプション設定に従う。読めなければブラウザのUI言語のまま進む。
+const settings = await getSettings().catch(() => ({}));
+setLanguage(settings.uiLanguage);
+localizePage('extName');
+if (!touched) directLink.checked = Boolean(settings.directLink);
