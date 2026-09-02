@@ -21,6 +21,7 @@ import { AIM_MODE_COMMAND } from '../shared/commands.js';
 import { resolveLanguage } from '../shared/i18n.js';
 // このファイルの MESSAGES は拡張内部のメッセージ種別なので、表示文字列の辞書は別名で取る
 import { MESSAGES as DICTIONARIES } from '../shared/messages.js';
+import { qrPayloadText } from '../shared/qr-text.js';
 import { getSettings } from '../shared/settings.js';
 import { toSafeUrl } from '../shared/url.js';
 import jsQR from '../vendor/jsqr/index.js';
@@ -411,11 +412,19 @@ function detectQrCodes(source) {
     const code = jsQR(image.data, image.width, image.height, {
       inversionAttempts: 'attemptBoth',
     });
-    if (!code || typeof code.data !== 'string' || code.data === '') break;
+    if (!code) break;
+
+    /*
+     * 中身の文字列は jsQR の `data` をそのまま使わない。
+     * Shift_JIS の日本語を取り落とすため、バイト列から復号し直す
+     * （`src/shared/qr-text.js`）。
+     */
+    const text = qrPayloadText(code);
+    if (text === '') break;
 
     const workBbox = bboxOfLocation(code.location);
     found.push({
-      text: code.data,
+      text,
       version: code.version,
       // 縮小した座標を元の切り出し画像の座標へ戻す
       bbox: {

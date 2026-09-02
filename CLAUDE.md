@@ -80,7 +80,7 @@ CHROME_EXTENSION.md の規定構成に、このプロジェクト固有のもの
 │   ├── debug/        # 読み取った画像の確認画面
 │   ├── options/
 │   ├── popup/
-│   ├── shared/       # 設定・URL検証・表示言語と文言の辞書・拡張ページ共通CSS
+│   ├── shared/       # 設定・URL検証・QRの中身の復号・表示言語と文言の辞書・拡張ページ共通CSS
 │   └── vendor/       # 同梱ライブラリ（jsQR）
 ├── promotion/        # ストア掲載用の素材
 └── work/             # gitignore 済み。仕様書・実験・テスト素材置き場
