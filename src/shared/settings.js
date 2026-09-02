@@ -44,6 +44,15 @@ export const DEFAULT_SETTINGS = {
    * off でも結果パネルのボタンから開ける。
    */
   openCaptureInTab: false,
+
+  /**
+   * ダイレクトリンク：URLを読み取れたら、確認パネルを出さずに直ちに新しいタブで開く。
+   *
+   * 既定は off。読み取った内容を見せてから開くのが基本の作りであり、
+   * それを省くのはユーザーが明示的に選んだときだけとする（仕様書 §5.4）。
+   * URLでなかった場合・見つからなかった場合は、on でもパネルを出す。
+   */
+  directLink: false,
 };
 
 export const SETTING_LIMITS = {
@@ -75,6 +84,7 @@ export async function getSettings() {
     ocrRegionWidth: clampNumber('ocrRegionWidth', stored.ocrRegionWidth),
     ocrRegionHeight: clampNumber('ocrRegionHeight', stored.ocrRegionHeight),
     openCaptureInTab: Boolean(stored.openCaptureInTab),
+    directLink: Boolean(stored.directLink),
   };
 }
 

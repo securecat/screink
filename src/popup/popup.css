@@ -32,6 +32,14 @@ h2 {
   margin: 0;
 }
 
+/* チェックボックスとそのラベル。options 側の .field と同じ組み方。 */
+.field {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 8px;
+}
+
 #start {
   width: 100%;
 }

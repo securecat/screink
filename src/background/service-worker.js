@@ -627,6 +627,29 @@ async function recognize(tab, request) {
   };
 }
 
+/**
+ * 候補のうち最初のURLを新しいタブで開く（ダイレクトリンク用）。
+ *
+ * 候補は近い順に並んでいるので、先頭が「指した位置にいちばん近いURL」になる。
+ * 開けたらその URL、開かなかった・開けなかったら null を返す。
+ *
+ * @param {Array<{kind: string, url: string | null}>} candidates
+ */
+async function openFirstUrl(candidates) {
+  const candidate = candidates.find((entry) => entry.kind === 'url');
+  const url = candidate ? toSafeUrl(candidate.url) : null;
+  if (!url) return null;
+
+  try {
+    await chrome.tabs.create({ url });
+    return url;
+  } catch (error) {
+    // 開けなかったときは黙って確認パネルへ落とす（呼び出し側が null を見る）
+    console.warn('[screink] ダイレクトリンクを開けませんでした:', error);
+    return null;
+  }
+}
+
 /* ------------------------------------------------------------------ *
  * イベント
  * ------------------------------------------------------------------ */
@@ -680,7 +703,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (settings.openCaptureInTab) {
           await chrome.tabs.create({ url: chrome.runtime.getURL('src/debug/capture.html') });
         }
-        sendResponse({ ok: true, ...result, openedInTab: settings.openCaptureInTab });
+        /*
+         * ダイレクトリンクが on なら、確認パネルを経ずにここで開く。
+         *
+         * 開く直前に `toSafeUrl()` を通すのは、確認を挟む経路と同じ。
+         * 確認UIを省いても、http / https 以外を開かないという保証は変わらない
+         * （仕様書 §5.2・§5.4）。
+         *
+         * URLでない候補（テキストのQRコード）や、見つからなかった場合は開かない。
+         * その場合は今までどおりパネルを出す。
+         */
+        const opened = settings.directLink ? await openFirstUrl(result.candidates) : null;
+        sendResponse({
+          ok: true,
+          ...result,
+          opened,
+          openedInTab: settings.openCaptureInTab,
+        });
       } catch (error) {
         sendResponse({ ok: false, reason: 'capture-failed', detail: String(error) });
       }

@@ -1,6 +1,6 @@
 import { localizePage, setLanguage, t } from '../shared/i18n.js';
 import { getAimModeShortcut } from '../shared/commands.js';
-import { getSettings } from '../shared/settings.js';
+import { getSettings, saveSetting } from '../shared/settings.js';
 
 /*
  * まずブラウザのUI言語で組み立てる。HTML に書いてある既定の文言は英語なので、
@@ -9,8 +9,34 @@ import { getSettings } from '../shared/settings.js';
 localizePage('extName');
 
 // 表示言語はオプション設定に従う。読めなければブラウザのUI言語のまま進む。
-setLanguage((await getSettings().catch(() => ({}))).uiLanguage);
+const settings = await getSettings().catch(() => ({}));
+setLanguage(settings.uiLanguage);
 localizePage('extName');
+
+const startButton = document.querySelector('#start');
+const statusText = document.querySelector('#status');
+
+/*
+ * ダイレクトリンク。照準モードを開始する前に決められるよう、
+ * オプションページではなくここに置いている（使うたびに切り替わりうる設定のため）。
+ *
+ * 設定を読んだ直後に、状態の反映とハンドラの登録を済ませる。
+ * この先には await があるので、後ろに回すと「操作はできるが保存されない」
+ * 短い時間ができてしまう。
+ */
+const directLink = document.querySelector('#direct-link');
+directLink.checked = Boolean(settings.directLink);
+
+directLink.addEventListener('change', async () => {
+  try {
+    await saveSetting('directLink', directLink.checked);
+  } catch (error) {
+    // 保存できなければ、チェックの見た目を実際の状態へ戻す
+    directLink.checked = !directLink.checked;
+    statusText.textContent = t('popupSaveFailed');
+    console.warn('[screink] 設定を保存できませんでした:', error);
+  }
+});
 
 /*
  * ショートカットキーの表記は、実際の割り当てから作る。
@@ -24,9 +50,6 @@ shortcutText.textContent = t('popupShortcutNone');
 
 const shortcut = await getAimModeShortcut();
 if (shortcut) shortcutText.textContent = t('popupShortcut', [shortcut]);
-
-const startButton = document.querySelector('#start');
-const statusText = document.querySelector('#status');
 
 function describeFailure(response) {
   switch (response?.reason) {
