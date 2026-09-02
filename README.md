@@ -52,15 +52,22 @@ QR codes are decoded by [jsQR](https://github.com/cozmo/jsQR) (Apache License 2.
 
 ## Changelog
 
-### [1.0.0] - 2026-08-31
+### [1.1.0] - 2026-09-03
 
 #### Added
 
-- The release version. screink reads QR codes.
+- Direct links, a checkbox in the popup. With it on, reading a URL opens it in a new tab straight away instead of showing you the panel first. Off unless you turn it on, and it changes nothing about which URLs may be opened: anything that is not http or https still cannot be, and anything that is not a URL still raises the panel.
+- The inspect page now says how each code was decoded — which encoding produced the text, the QR mode and version, and the raw bytes in hex. A code that cannot be turned into text at all is listed there too, rather than being dropped as if nothing had been found.
+
+#### Changed
+
+- The button on the panel reads "See what was read", and the page it opens is titled to match. It is no longer only about the image.
+- The popup drops the line about keyboard shortcuts. Whoever assigned one knows what they pressed, and the options page is where you learn one can be assigned.
 
 #### Fixed
 
-- The outline marking what was read stayed with the screen when the page scrolled, drifting away from the QR code it marks. It rides with the page now, and disappears once it has scrolled off screen.
+- QR codes carrying Japanese written in Shift_JIS can be read. jsQR assumes UTF-8 for byte-mode content and quietly discards anything else, so those codes came back as though nothing had been found. The bytes are now decoded here instead — by the encoding the code declares, or failing that as UTF-8 and then Shift_JIS.
+- A code that is found but cannot be turned into text now says so, instead of claiming nothing was found. The two have different next steps.
 
 For the full history, see [CHANGELOG.md](CHANGELOG.md).
 
@@ -120,14 +127,21 @@ QRコードのデコードには[jsQR](https://github.com/cozmo/jsQR)（Apache L
 
 ## 更新履歴
 
-### [1.0.0] - 2026-08-31
+### [1.1.0] - 2026-09-03
 
 #### 追加
 
-- リリースバージョンになりました。読み取れるのはQRコードです。
+- ポップアップに「ダイレクトリンクを使用する」を追加しました。オンにすると、URLを読み取った時点で確認のパネルを出さず、すぐ新しいタブで開きます。既定はオフです。開けるURLの範囲は変わりません。http / https 以外は相変わらず開きませんし、URLでないものは今までどおりパネルに出ます。
+- 読み取った内容を確認する画面に、それをどう読んだかを出すようにしました。どの符号化で文字になったのか、QRコードのモードとバージョン、そしてバイト列そのものを16進で表示します。どうしても文字にできなかったコードも、見つからなかった扱いで捨てずにここへ並べます。
+
+#### 変更
+
+- パネルのボタンを「読み取った内容を確認する」にしました。開く先の画面の見出しも合わせています。もう画像だけの画面ではないためです。
+- ポップアップからショートカットキーの案内を削除しました。割り当てた本人はそのキーを知っていますし、割り当てられること自体はオプション設定に書いてあります。
 
 #### 修正
 
-- 読み取った位置を示す枠が、ページをスクロールしても画面に貼り付いたまま残り、示していたQRコードから離れていってしまいました。ページの内容と一緒に動くようにし、画面の外へ出たら消えるようにしました。
+- Shift_JIS で書かれた日本語のQRコードが読めるようになりました。jsQR はバイトモードの中身を UTF-8 と決めつけ、そうでないものを黙って捨てるため、これらのコードは「見つからなかった」と同じ扱いになっていました。バイト列はこちらで復号するようにしました。コードが符号化を宣言していればそれで、無ければ UTF-8 → Shift_JIS の順に試します。
+- 見つかったのに文字にできなかった場合に、そう伝えるようにしました。「見つからなかった」と言ってしまっていましたが、この2つは次にすることが違います。
 
 全履歴は [CHANGELOG.md](CHANGELOG.md) を参照してください。
