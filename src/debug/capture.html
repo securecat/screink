@@ -3,17 +3,18 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>screink — What was captured</title>
+    <title>screink — What was read</title>
     <link rel="stylesheet" href="../shared/page.css" />
     <link rel="stylesheet" href="capture.css" />
   </head>
   <body>
     <main>
-      <h1 data-i18n="debugTitle">What was captured</h1>
+      <h1 data-i18n="debugTitle">What was read</h1>
 
       <p class="note" data-i18n="debugIntro">
         This page shows what happened when something would not read. The position you pointed at,
         the area that was actually captured, and any QR code found are drawn on top of each other.
+        Every code found is listed with how its contents were decoded.
       </p>
 
       <p class="status" id="status" role="status"></p>
@@ -25,16 +26,16 @@
       </figure>
 
       <section id="results" hidden>
-        <h2 data-i18n="debugResultsHeading">What was read</h2>
+        <h2 data-i18n="debugResultsHeading">The QR codes found</h2>
         <div id="candidates"></div>
       </section>
 
       <hr />
 
-      <h2 data-i18n="debugHandlingHeading">What happens to this image</h2>
+      <h2 data-i18n="debugHandlingHeading">What happens to what is shown here</h2>
       <ul>
         <li data-i18n="debugHandling1">
-          It exists only in your browser's memory. It is never written to a file.
+          It all exists only in your browser's memory. None of it is written to a file.
         </li>
         <li data-i18n="debugHandling2">
           It is lost once the extension goes idle, or when Chrome restarts.

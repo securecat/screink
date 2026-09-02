@@ -121,6 +121,12 @@ figcaption {
   user-select: text;
 }
 
+/* 16進のバイト列。長くなるので折り返し、選択してコピーできるようにする */
+.candidate__bytes {
+  word-break: break-all;
+  user-select: text;
+}
+
 ul {
   margin: 0 0 12px;
   padding-left: 24px;

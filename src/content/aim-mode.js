@@ -545,8 +545,12 @@
 
   function showNotFound(response) {
     renderFoundBox(null);
-    ui.title.textContent = t('overlayTitleNotFound');
-    ui.body.textContent = t('overlayBodyNotFound');
+
+    // 「見つからなかった」と「見つけたが文字にできなかった」は分けて伝える。
+    // 後者は確認画面にバイト列が出るので、次の一手が違う。
+    const undecodable = response.undecodable === true;
+    ui.title.textContent = t(undecodable ? 'overlayTitleUndecodable' : 'overlayTitleNotFound');
+    ui.body.textContent = t(undecodable ? 'overlayBodyUndecodable' : 'overlayBodyNotFound');
     ui.body.hidden = false;
     ui.destination.hidden = true;
     ui.payload.hidden = true;

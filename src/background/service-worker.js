@@ -21,7 +21,7 @@ import { AIM_MODE_COMMAND } from '../shared/commands.js';
 import { resolveLanguage } from '../shared/i18n.js';
 // このファイルの MESSAGES は拡張内部のメッセージ種別なので、表示文字列の辞書は別名で取る
 import { MESSAGES as DICTIONARIES } from '../shared/messages.js';
-import { qrPayloadText } from '../shared/qr-text.js';
+import { readQrPayload } from '../shared/qr-text.js';
 import { getSettings } from '../shared/settings.js';
 import { toSafeUrl } from '../shared/url.js';
 import jsQR from '../vendor/jsqr/index.js';
@@ -418,13 +418,20 @@ function detectQrCodes(source) {
      * 中身の文字列は jsQR の `data` をそのまま使わない。
      * Shift_JIS の日本語を取り落とすため、バイト列から復号し直す
      * （`src/shared/qr-text.js`）。
+     *
+     * どの符号化でも読めなかった場合も、見つけたこと自体は残す。
+     * 確認画面にバイト列を出せれば、報告を受けたときに符号化を追える。
+     * 候補としては提示しない（`selectCandidates` が外す）。
      */
-    const text = qrPayloadText(code);
-    if (text === '') break;
+    const payload = readQrPayload(code);
 
     const workBbox = bboxOfLocation(code.location);
     found.push({
-      text,
+      text: payload.text,
+      source: payload.source,
+      modes: payload.modes,
+      eci: payload.eci,
+      bytes: payload.bytes,
       version: code.version,
       // 縮小した座標を元の切り出し画像の座標へ戻す
       bbox: {
@@ -487,9 +494,16 @@ function toCandidate(code, crop, dpr, point) {
   const near = containsPoint || distance <= reach;
 
   return {
-    kind: url ? 'url' : 'text',
+    // 'undecodable'：QRコードとしては見つかったが、どの符号化でも文字にできなかったもの。
+    // 確認画面には出すが、候補としては提示しない（`selectCandidates`）。
+    kind: code.text === '' ? 'undecodable' : url ? 'url' : 'text',
     text: code.text,
     url,
+    // 読み取りの手がかり（確認画面で出す）
+    source: code.source,
+    modes: code.modes,
+    eci: code.eci,
+    bytes: code.bytes,
     version: code.version,
     bboxCss: {
       x: Math.round(cssBbox.x),
@@ -510,7 +524,7 @@ function toCandidate(code, crop, dpr, point) {
  */
 function selectCandidates(candidates) {
   return candidates
-    .filter((candidate) => candidate.near)
+    .filter((candidate) => candidate.near && candidate.kind !== 'undecodable')
     .sort((a, b) => {
       if (a.containsPoint !== b.containsPoint) return a.containsPoint ? -1 : 1;
       return a.distance - b.distance;
@@ -629,6 +643,12 @@ async function recognize(tab, request) {
     // 表示は拡張ページ側（src/debug/）で行う。
     // 指した位置に対応するものだけを、近い順に渡す。
     candidates: result.selected,
+    /*
+     * QRコードとしては見つかったが、どの符号化でも文字にできなかったものがあるか。
+     * 「見つからなかった」と「読めなかった」は原因も次の一手も違うので、
+     * パネルの文言を分けるために渡す。
+     */
+    undecodable: result.candidates.some((candidate) => candidate.kind === 'undecodable'),
     chosenIndex: result.selected.length > 0 ? 0 : -1,
     attemptCount,
     elapsedMs,

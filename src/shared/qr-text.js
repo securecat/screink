@@ -25,12 +25,13 @@ const ECI_ENCODINGS = new Map([
   [26, 'utf-8'],
 ]);
 
-/** 候補の符号化を順に試し、最初に成立したものを返す。 */
+/** 候補の符号化を順に試し、最初に成立したものを返す。読めなければ空文字。 */
 function decodeBytes(bytes, encodings) {
+  const view = new Uint8Array(bytes);
   for (const encoding of encodings) {
     try {
       // fatal: true にしないと、壊れたバイト列が U+FFFD の羅列として「成功」してしまう
-      const text = new TextDecoder(encoding, { fatal: true }).decode(bytes);
+      const text = new TextDecoder(encoding, { fatal: true }).decode(view);
       if (text !== '') return text;
     } catch {
       // この符号化では読めない。次を試す
@@ -48,20 +49,34 @@ function isDropped(chunk) {
 }
 
 /**
+ * QRコードの中身と、それをどう読んだか。
+ *
+ * `source` は読み取った経路を示す。確認画面（`src/debug/`）で、うまく読めなかったときの
+ * 手がかりとして出すためにここで返している。
+ *   'jsqr'                        jsQR の結果をそのまま使った
+ *   'utf-8' / 'shift_jis' / ...   jsQR が取り落としたのでバイト列から復号し直した
+ *   ''                            どの符号化でも読めなかった
+ *
  * @param {{data?: string, binaryData?: number[],
  *          chunks?: Array<{type?: string, text?: string, bytes?: number[],
  *                          assignmentNumber?: number}>}} code jsQR の返り値
- * @returns {string} 読み取れなければ空文字
+ * @returns {{text: string, source: string, modes: string[], eci: number | null,
+ *            bytes: number[]}}
  */
-export function qrPayloadText(code) {
+export function readQrPayload(code) {
   const chunks = Array.isArray(code?.chunks) ? code.chunks : [];
   const data = typeof code?.data === 'string' ? code.data : '';
+  const bytes = Array.isArray(code?.binaryData) ? code.binaryData : [];
+
+  const declared = chunks.find((chunk) => typeof chunk?.assignmentNumber === 'number');
+  const eci = typeof declared?.assignmentNumber === 'number' ? declared.assignmentNumber : null;
+  const modes = [...new Set(chunks.map((chunk) => chunk?.type).filter((type) => type && type !== 'eci'))];
+
+  const describe = (text, source) => ({ text, source, modes, eci, bytes });
 
   // jsQR が全部読めていればそれを使う（ASCII や UTF-8 のQRコードはここで終わる）
-  if (data !== '' && !chunks.some(isDropped)) return data;
-
-  const bytes = new Uint8Array(Array.isArray(code?.binaryData) ? code.binaryData : []);
-  if (bytes.length === 0) return data;
+  if (data !== '' && !chunks.some(isDropped)) return describe(data, 'jsqr');
+  if (bytes.length === 0) return describe(data, data === '' ? '' : 'jsqr');
 
   /*
    * 試す順番：
@@ -72,12 +87,16 @@ export function qrPayloadText(code) {
    * ASCII しか含まない場合はどれでも同じ結果になるので、順番は問題にならない。
    * 漢字モードのバイト列は Shift_JIS そのものなので、この順番で拾える。
    */
-  const declared = chunks.find((chunk) => typeof chunk?.assignmentNumber === 'number');
   const encodings = [];
-  const fromEci = ECI_ENCODINGS.get(declared?.assignmentNumber);
+  const fromEci = ECI_ENCODINGS.get(eci);
   if (fromEci) encodings.push(fromEci);
   encodings.push('utf-8', 'shift_jis');
 
-  const recovered = decodeBytes(bytes, encodings);
-  return recovered !== '' ? recovered : data;
+  for (const encoding of encodings) {
+    const text = decodeBytes(bytes, [encoding]);
+    if (text !== '') return describe(text, encoding);
+  }
+
+  // バイト列からは読めなかった。jsQR が部分的に読めていればそれを返す
+  return describe(data, data === '' ? '' : 'jsqr');
 }

@@ -91,6 +91,39 @@ function renderMarkers(capture, image) {
   new ResizeObserver(place).observe(image);
 }
 
+/** 読み取りの経路を1行で説明する（うまく読めなかったときの手がかり）。 */
+function describeDecoding(candidate) {
+  if (candidate.source === 'jsqr') return t('debugDecodedJsqr');
+  if (candidate.source) return t('debugDecodedRecovered', [candidate.source]);
+  return t('debugDecodedFailed');
+}
+
+/** QRコードのモード（と ECI の宣言）を1行にする。 */
+function describeModes(candidate) {
+  const modes = Array.isArray(candidate.modes) ? candidate.modes : [];
+  const parts = [modes.length > 0 ? modes.join(' + ') : '—'];
+  if (typeof candidate.eci === 'number') parts.push(`ECI ${candidate.eci}`);
+  if (typeof candidate.version === 'number') parts.push(`version ${candidate.version}`);
+  return parts.join(' / ');
+}
+
+/**
+ * バイト列を16進で出す。
+ *
+ * 符号化を判定できなかったQRコードは、これが唯一の手がかりになる。
+ * 全部出すと長くなりすぎるので先頭だけにし、残りの数を添える。
+ */
+const BYTES_SHOWN = 96;
+
+function describeBytes(bytes) {
+  const shown = bytes
+    .slice(0, BYTES_SHOWN)
+    .map((byte) => byte.toString(16).padStart(2, '0').toUpperCase())
+    .join(' ');
+  const rest = bytes.length - BYTES_SHOWN;
+  return rest > 0 ? `${shown} ${t('debugBytesMore', [String(rest)])}` : shown;
+}
+
 function renderCandidates(capture) {
   if (capture.candidates.length === 0) {
     const message = el('p', 'note');
@@ -105,24 +138,50 @@ function renderCandidates(capture) {
     const item = el('li', 'candidate');
     if (candidate.near) item.classList.add('candidate--chosen');
 
+    const kindKey = {
+      url: 'debugKindUrl',
+      text: 'debugKindText',
+      undecodable: 'debugKindUndecodable',
+    }[candidate.kind] ?? 'debugKindText';
+
     const heading = el('p', 'candidate__heading');
     heading.textContent = [
-      t(candidate.kind === 'url' ? 'debugKindUrl' : 'debugKindText'),
+      t(kindKey),
       candidate.containsPoint
         ? t('debugInsidePoint')
         : t('debugDistance', [String(candidate.distance)]),
-      t(candidate.near ? 'debugAccepted' : 'debugRejected'),
+      t(candidate.near && candidate.kind !== 'undecodable' ? 'debugAccepted' : 'debugRejected'),
     ].join(' / ');
     item.append(heading);
 
-    const payload = el('p', 'candidate__payload mono');
-    payload.textContent = candidate.url ?? candidate.text;
-    item.append(payload);
+    const text = candidate.url ?? candidate.text;
+    if (text !== '') {
+      const payload = el('p', 'candidate__payload mono');
+      payload.textContent = text;
+      item.append(payload);
+    }
 
-    if (candidate.kind !== 'url') {
+    if (candidate.kind === 'text') {
       const why = el('p', 'note');
       why.textContent = t('debugNotUrl');
       item.append(why);
+    }
+
+    /*
+     * どう読んだか（符号化・モード・バイト列）。
+     * 「読み取れなかった」ときはここだけが手がかりになる。
+     */
+    const decoding = el('p', 'note mono');
+    decoding.textContent = `${t('debugLabelDecoded')}: ${describeDecoding(candidate)} / ${t(
+      'debugLabelMode',
+    )}: ${describeModes(candidate)}`;
+    item.append(decoding);
+
+    const bytes = Array.isArray(candidate.bytes) ? candidate.bytes : [];
+    if (bytes.length > 0) {
+      const byteLine = el('p', 'note mono candidate__bytes');
+      byteLine.textContent = `${t('debugLabelBytes')} (${bytes.length}): ${describeBytes(bytes)}`;
+      item.append(byteLine);
     }
 
     const geometry = el('p', 'note mono');
