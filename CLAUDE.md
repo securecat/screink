@@ -207,6 +207,8 @@ node --experimental-websocket --no-warnings work/e2e/run-qr.mjs [倍率]  # QR�
 node --experimental-websocket --no-warnings work/e2e/check-contrast.mjs [言語]  # コントラスト比
 node --experimental-websocket --no-warnings work/e2e/qr-size-sweep.mjs  [倍率]  # 読める最小サイズ
 node --experimental-websocket --no-warnings work/e2e/probe-barcode.mjs  [headful]  # BarcodeDetector の可否
+node --experimental-websocket --no-warnings work/e2e/ocr-lab.mjs                # OCR の経路（Phase 1）
+node work/e2e/url-text-lab.mjs                                                  # 文中からのURL切り出し
 ```
 
 Chrome 151 では `--load-extension` が機能しないため、これらは CDP の
