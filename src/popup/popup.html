@@ -17,10 +17,15 @@
 
     <button id="start" type="button" data-i18n="popupStart">Enter aim mode</button>
 
-    <!-- チェックを入れると、URLを読み取れた時点で確認パネルを出さずに開く -->
+    <!--
+      チェックを入れると、QRコードからURLを読み取れた時点で確認パネルを出さずに開く。
+      OCR が文字から読んだURLは対象外（1字違いが起きるため。仕様書 §5.4）。
+    -->
     <div class="field">
       <input type="checkbox" id="direct-link" name="directLink" />
-      <label for="direct-link" data-i18n="popupDirectLink">Open URLs directly in a new tab</label>
+      <label for="direct-link" data-i18n="popupDirectLink">
+        Open URLs from QR codes directly in a new tab
+      </label>
     </div>
 
     <p class="status" id="status" role="status"></p>
