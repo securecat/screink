@@ -28,6 +28,8 @@ import jsQR from '../vendor/jsqr/index.js';
 
 const MESSAGES = {
   START_AIM_MODE: 'screink:start-aim-mode',
+  OCR: 'screink:ocr',
+  OCR_RUN: 'screink:ocr-run',
   GET_SETTINGS: 'screink:get-settings',
   RECOGNIZE: 'screink:recognize',
   OPEN_URL: 'screink:open-url',
@@ -656,6 +658,60 @@ async function recognize(tab, request) {
   };
 }
 
+/* ------------------------------------------------------------------ *
+ * OCR（offscreen document 経由）
+ * ------------------------------------------------------------------ */
+
+const OFFSCREEN_PATH = 'src/offscreen/ocr.html';
+
+/**
+ * OCR を動かすための offscreen document を用意する。
+ *
+ * Tesseract.js は Web Worker を作るが、service worker の中では Worker を作れない。
+ * ページ側（content script）で動かすとページの CSP に縛られる（仕様書 §4.4）ため、
+ * 拡張自身の見えないページを立てて、その中で動かす。
+ *
+ * `offscreen` 権限はこのためだけに使う。サイトへのアクセス権ではない。
+ */
+let offscreenReady = null;
+
+async function ensureOffscreen() {
+  const contexts = await chrome.runtime.getContexts({
+    contextTypes: ['OFFSCREEN_DOCUMENT'],
+    documentUrls: [chrome.runtime.getURL(OFFSCREEN_PATH)],
+  });
+  if (contexts.length > 0) return;
+
+  // 同時に2回作ろうとすると失敗するので、作成中は同じ約束を待たせる
+  if (!offscreenReady) {
+    offscreenReady = chrome.offscreen
+      .createDocument({
+        url: OFFSCREEN_PATH,
+        reasons: ['WORKERS'],
+        justification: 'Runs the bundled OCR engine, which needs a Web Worker.',
+      })
+      .finally(() => {
+        offscreenReady = null;
+      });
+  }
+  await offscreenReady;
+}
+
+/**
+ * 切り出した画像を OCR にかける。
+ *
+ * @param {string} dataUrl
+ * @returns {Promise<{text: string, words: Array<object>, elapsedMs: number}>}
+ */
+async function runOcr(dataUrl) {
+  await ensureOffscreen();
+  const response = await chrome.runtime.sendMessage({ type: MESSAGES.OCR_RUN, dataUrl });
+  if (!response?.ok) {
+    throw new Error(response?.detail ?? 'OCR に失敗しました');
+  }
+  return response;
+}
+
 /**
  * 候補のうち最初のURLを新しいタブで開く（ダイレクトリンク用）。
  *
@@ -779,6 +835,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .create({ url: chrome.runtime.getURL('src/debug/capture.html') })
       .then(() => sendResponse({ ok: true }))
       .catch((error) => sendResponse({ ok: false, detail: String(error) }));
+    return true;
+  }
+
+  /*
+   * 画像を OCR にかける。Phase 1 の入口。
+   * いまは拡張ページ（確認画面・テスト）から呼ぶだけで、照準モードの経路には
+   * まだ繋いでいない（仕様書 §9 Phase 1）。
+   */
+  if (type === MESSAGES.OCR) {
+    (async () => {
+      try {
+        const result = await runOcr(message.dataUrl);
+        sendResponse({ ok: true, ...result });
+      } catch (error) {
+        sendResponse({ ok: false, reason: 'ocr-failed', detail: String(error) });
+      }
+    })();
     return true;
   }
 
