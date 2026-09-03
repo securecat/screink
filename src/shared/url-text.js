@@ -135,3 +135,67 @@ export function findUrlsInText(text) {
     .sort((a, b) => a.start - b.start)
     .map(({ text: candidate, url }) => ({ text: candidate, url }));
 }
+
+/**
+ * OCR が返した語の並びからURLを取り出し、それを構成した語の外接矩形を添える。
+ *
+ * 位置が要るのは、指した場所との対応判定（仕様書 §6.1）に載せるため。
+ * QRコードは4隅の座標が得られるが、OCR では語ごとの矩形しか得られないので、
+ * URLを構成した語をまとめた矩形を作る。
+ *
+ * 語と切り出した文字列の突き合わせは、空白を取り除いた文字列の上で行う。
+ * `https:// example.com` のように、1つのURLが複数の語に割れることがあるためで、
+ * `normalizeOcrText()` がその空白を詰めた結果は、語の境界と一致しない。
+ * 空白を落としてしまえば、割れていてもいなくても同じ探し方で位置が求まる。
+ *
+ * @param {Array<{text: string, confidence: number,
+ *                bbox: {x0: number, y0: number, x1: number, y1: number}}>} words
+ * @returns {Array<{text: string, url: string,
+ *                  bbox: {x:number,y:number,width:number,height:number} | null,
+ *                  confidence: number | null}>}
+ */
+export function findUrlsInWords(words) {
+  const list = Array.isArray(words) ? words : [];
+
+  const pieces = [];
+  let joined = '';
+  for (const word of list) {
+    const text = normalizeOcrText(word?.text).replace(/\s+/g, '');
+    if (text === '' || !word?.bbox) continue;
+    pieces.push({ start: joined.length, end: joined.length + text.length, word });
+    joined += text;
+  }
+
+  const spaced = list.map((word) => String(word?.text ?? '')).join(' ');
+  let cursor = 0;
+
+  return findUrlsInText(spaced).map((entry) => {
+    const at = joined.indexOf(entry.text, cursor);
+    const parts =
+      at < 0
+        ? []
+        : pieces.filter((piece) => piece.start < at + entry.text.length && piece.end > at);
+    if (at >= 0) cursor = at + entry.text.length;
+
+    if (parts.length === 0) {
+      // 語に対応づけられなかった場合は位置なしで返す。呼び出し側が切り出し範囲で代替する
+      return { text: entry.text, url: entry.url, bbox: null, confidence: null };
+    }
+
+    const boxes = parts.map((piece) => piece.word.bbox);
+    const x0 = Math.min(...boxes.map((box) => box.x0));
+    const y0 = Math.min(...boxes.map((box) => box.y0));
+    const x1 = Math.max(...boxes.map((box) => box.x1));
+    const y1 = Math.max(...boxes.map((box) => box.y1));
+
+    return {
+      text: entry.text,
+      url: entry.url,
+      bbox: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 },
+      // 構成した語のうち最も低い信頼度を採る（1語でも怪しければ怪しい）
+      confidence: Math.round(
+        Math.min(...parts.map((piece) => Number(piece.word.confidence) || 0)),
+      ),
+    };
+  });
+}

@@ -33,7 +33,8 @@ export const DEFAULT_SETTINGS = {
 
   /**
    * OCR用の切り出し領域（CSSピクセル）。URLは横に長く縦に薄いため帯にする。
-   * Phase 1 で使用する。現時点では未使用のため設定画面には出していない。
+   * QRコードが見つからなかったときに、指した位置を中心にこの帯を切り出す
+   * （仕様書 §4.6）。設定画面には出していない。
    */
   ocrRegionWidth: 960,
   ocrRegionHeight: 200,

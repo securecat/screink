@@ -5,6 +5,7 @@
  *   - 照準モードの起動（ショートカットキー / ポップアップからの要求）
  *   - 画面キャプチャと切り出し
  *   - QRコードのデコード
+ *   - QRで見つからなければ OCR（offscreen document 経由）
  *   - URLを新しいタブで開く（スキームの再検証つき）
  *
  * 画像処理をここで行っているのは意図的。content script 側で canvas や
@@ -24,6 +25,7 @@ import { MESSAGES as DICTIONARIES } from '../shared/messages.js';
 import { readQrPayload } from '../shared/qr-text.js';
 import { getSettings } from '../shared/settings.js';
 import { toSafeUrl } from '../shared/url.js';
+import { findUrlsInWords } from '../shared/url-text.js';
 import jsQR from '../vendor/jsqr/index.js';
 
 const MESSAGES = {
@@ -66,6 +68,28 @@ const QUIET_ZONE_MIN = 12;
  * これを超える切り出しは縮小してから走査する（`detectQrCodes` を参照）。
  */
 const MAX_DECODE_SIDE = 1200;
+
+/* ------------------------------------------------------------------ *
+ * OCR の前処理の定数（`preprocessForOcr` を参照）
+ * ------------------------------------------------------------------ */
+
+/**
+ * OCR にかける画像を、CSSピクセルの何倍まで拡大するか。
+ *
+ * 小さい文字の精度に効くのは**物理ピクセルでの文字の大きさ**なので、
+ * 倍率は devicePixelRatio で割って決める。高DPI環境ではキャプチャの時点で
+ * すでに拡大されているため、そこへさらに3倍かけても精度は伸びず時間だけ増える
+ * （仕様書 §4.6）。
+ */
+const OCR_TARGET_SCALE = 2.5;
+const OCR_MIN_SCALE = 1;
+const OCR_MAX_SCALE = 3;
+/** OCR にかける画像の一辺の上限（物理ピクセル）。これを超えないよう倍率を抑える。 */
+const OCR_MAX_SIDE = 2600;
+/** コントラストを伸ばすときに、両端で切り落とす画素の割合。 */
+const OCR_CLIP_RATIO = 0.02;
+/** 明暗の幅がこれ未満なら伸ばさない（単色に近い面をノイズだけ強調しないため）。 */
+const OCR_MIN_RANGE = 24;
 
 /* ------------------------------------------------------------------ *
  * 指した対象の輪郭を探すための定数（`locateTarget` を参照）
@@ -212,6 +236,86 @@ function cropRegion(bitmap, shot, region, dpr) {
     padding,
     clamped: x !== rawX || y !== rawY || width !== rawW || height !== rawH,
   };
+}
+
+/* ------------------------------------------------------------------ *
+ * OCR の前処理
+ * ------------------------------------------------------------------ */
+
+/**
+ * OCR にかける前に、拡大・グレースケール・コントラスト強調をかける。
+ *
+ * 小さい文字の精度に大きく効くため、Phase 1 の時点から入れている。
+ * 素の画像で精度を測ると「OCRでは無理」と誤った判断をしかねない（仕様書 §4.6）。
+ *
+ * コントラストは固定の係数ではなく、実際の明暗の分布に合わせて伸ばす。
+ * 会議の画面共有は、白地に黒とも暗地に白とも限らず、圧縮で灰色に寄ることも多い。
+ * 両端の 2% を切り落としてから 0〜255 へ伸ばすので、薄い文字ほど効く。
+ *
+ * @param {OffscreenCanvas} source 切り出した画像（物理ピクセル）
+ * @param {number} dpr
+ * @returns {{canvas: OffscreenCanvas, scale: number}} scale は source に対する倍率
+ */
+function preprocessForOcr(source, dpr) {
+  // 上限は3倍と一辺2600px。どちらに当たっても、縮小はしない（下限は等倍）
+  const scale = Math.max(
+    OCR_MIN_SCALE,
+    Math.min(
+      OCR_TARGET_SCALE / dpr,
+      OCR_MAX_SCALE,
+      OCR_MAX_SIDE / Math.max(source.width, source.height),
+    ),
+  );
+
+  const width = Math.max(1, Math.round(source.width * scale));
+  const height = Math.max(1, Math.round(source.height * scale));
+
+  const canvas = new OffscreenCanvas(width, height);
+  const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(source, 0, 0, source.width, source.height, 0, 0, width, height);
+
+  const image = ctx.getImageData(0, 0, width, height);
+  const { data } = image;
+
+  const histogram = new Uint32Array(256);
+  for (let i = 0; i < data.length; i += 4) {
+    // 輝度の近似（緑を重く見る）。`locateTarget` と同じ式
+    const luma = Math.round((data[i] * 3 + data[i + 1] * 6 + data[i + 2]) / 10);
+    data[i] = luma;
+    histogram[luma] += 1;
+  }
+
+  const clip = Math.round(width * height * OCR_CLIP_RATIO);
+  let low = 0;
+  let high = 255;
+  for (let value = 0, sum = 0; value < 256; value += 1) {
+    sum += histogram[value];
+    if (sum > clip) {
+      low = value;
+      break;
+    }
+  }
+  for (let value = 255, sum = 0; value >= 0; value -= 1) {
+    sum += histogram[value];
+    if (sum > clip) {
+      high = value;
+      break;
+    }
+  }
+
+  const gain = high - low >= OCR_MIN_RANGE ? 255 / (high - low) : 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const luma = data[i];
+    const value = gain > 0 ? Math.min(255, Math.max(0, Math.round((luma - low) * gain))) : luma;
+    data[i] = value;
+    data[i + 1] = value;
+    data[i + 2] = value;
+  }
+  ctx.putImageData(image, 0, 0);
+
+  return { canvas, scale };
 }
 
 /* ------------------------------------------------------------------ *
@@ -457,7 +561,11 @@ function detectQrCodes(source) {
  * ------------------------------------------------------------------ */
 
 /**
- * デコード結果を、ビューポート座標（CSSピクセル）つきの候補へ変換する。
+ * 読み取り結果を、ビューポート座標（CSSピクセル）つきの候補へ変換する。
+ *
+ * QRコードでも OCR でも通る。QR固有の手がかり（符号化・モード・バイト列）と
+ * OCR固有の手がかり（信頼度）は、渡されたものだけがそのまま候補に乗る。
+ * `code.bbox` は切り出し画像内の物理ピクセルであること（単位を混ぜないこと）。
  */
 function toCandidate(code, crop, dpr, point) {
   // 切り出し画像内の物理ピクセル -> キャプチャ画像の物理ピクセル -> CSSピクセル
@@ -501,12 +609,15 @@ function toCandidate(code, crop, dpr, point) {
     kind: code.text === '' ? 'undecodable' : url ? 'url' : 'text',
     text: code.text,
     url,
+    // どちらのエンジンが読んだか（パネルの見出しと確認画面の説明を分けるため）
+    engine: code.engine ?? 'jsqr',
     // 読み取りの手がかり（確認画面で出す）
     source: code.source,
     modes: code.modes,
     eci: code.eci,
     bytes: code.bytes,
     version: code.version,
+    confidence: code.confidence,
     bboxCss: {
       x: Math.round(cssBbox.x),
       y: Math.round(cssBbox.y),
@@ -539,14 +650,19 @@ function selectCandidates(candidates) {
 
 /**
  * 可視領域を1枚キャプチャし、指定領域を順に試してQRコードを探す。
+ * 見つからなければ、同じ位置の帯を OCR にかけて文字からURLを探す。
  *
  * regions は content script が計算した領域の配列で、前から順に試す。
  * 1つ目で見つからなければ、より広い領域へ段階的に広げる
  * （QRコードが切り出し枠より大きい場合の救済。仕様書 §4.6）。
  *
+ * **QR を先に試すのは、速く確実（30〜300ms）だから。** OCR はそれより時間がかかる。
+ * QRで見つかった時点で OCR は走らせない（仕様書 §9 Phase 1c）。
+ *
  * @param {chrome.tabs.Tab} tab
  * @param {{point: {x:number,y:number}, dpr: number,
- *          regions: Array<{x:number,y:number,width:number,height:number}>}} request
+ *          regions: Array<{x:number,y:number,width:number,height:number}>,
+ *          ocrRegion?: {x:number,y:number,width:number,height:number}}} request
  */
 async function recognize(tab, request) {
   const startedAt = performance.now();
@@ -589,21 +705,34 @@ async function recognize(tab, request) {
   /** 指した位置に対応する候補が得られた切り出し。 */
   let matched = null;
   let attemptCount = 0;
+  /** OCR にかける帯。QRで見つからなかったときだけ用意する。 */
+  let band = null;
 
   try {
-    for (const region of regions) {
+    for (const [index, region] of regions.entries()) {
       attemptCount += 1;
       const crop = cropRegion(bitmap, shot, region, dpr);
+      // 輪郭に合わせた領域を先頭に足しているので、それが使われたかは index で分かる
+      const cropMode = located !== null && index === 0 ? 'located' : 'ladder';
       const candidates = detectQrCodes(crop.canvas).map((code) =>
         toCandidate(code, crop, dpr, point),
       );
-      if (used === null || candidates.length > 0) used = { crop, candidates };
+      if (used === null || candidates.length > 0) used = { crop, cropMode, candidates };
 
       const selected = selectCandidates(candidates);
       if (selected.length > 0) {
-        matched = { crop, candidates, selected };
+        matched = { crop, cropMode, candidates, selected };
         break;
       }
+    }
+
+    /*
+     * 切り出しと前処理は、bitmap を閉じる前に済ませてしまう。
+     * OCR の応答を待つ間キャプチャ画像（数MB）を抱えたままにしないため。
+     */
+    if (matched === null && request.ocrRegion) {
+      const crop = cropRegion(bitmap, shot, request.ocrRegion, dpr);
+      band = { crop, ...preprocessForOcr(crop.canvas, dpr) };
     }
   } finally {
     bitmap.close();
@@ -611,26 +740,84 @@ async function recognize(tab, request) {
 
   if (used === null) throw new Error('切り出す領域が指定されていません');
 
-  const result = matched ?? { ...used, selected: [] };
+  /** OCR の結果。QRで見つかった場合と、OCR が失敗した場合は null。 */
+  let ocr = null;
+  if (band !== null) {
+    try {
+      const read = await runOcr(await canvasToDataUrl(band.canvas));
+      const candidates = findUrlsInWords(read.words).map((entry) =>
+        toCandidate(
+          {
+            text: entry.text,
+            engine: 'tesseract',
+            confidence: entry.confidence,
+            bbox: bboxInCropFromOcr(entry.bbox, band),
+          },
+          band.crop,
+          dpr,
+          point,
+        ),
+      );
+      ocr = {
+        crop: band.crop,
+        cropMode: 'band',
+        candidates,
+        selected: selectCandidates(candidates),
+        // 目視確認用。読んだ文字を見せないと、URLが出ない理由が分からない
+        text: read.text,
+        image: band.canvas,
+        imageScale: band.scale,
+      };
+    } catch (error) {
+      // OCR が動かなくても、QRの結果（無しも含む）はそのまま返す
+      console.warn('[screink] OCR に失敗しました:', error);
+    }
+  }
+
+  let result;
+  if (matched !== null) {
+    result = matched;
+  } else if (ocr !== null && ocr.selected.length > 0) {
+    result = ocr;
+  } else if (ocr === null || used.candidates.some((code) => code.kind === 'undecodable')) {
+    /*
+     * 何も採用できなかったときに目視確認へ残すのは、手がかりの多い方。
+     *
+     * QRコードを見つけたのに文字にできなかった場合は、その切り出しを残す
+     * （パネルの「読み取れなかった」の判定もこの候補から出している）。
+     * それ以外は OCR にかけた帯と読んだ文字を残す。範囲を広げる段階で
+     * 画面の反対側のQRコードを拾っていることがあり、それは手がかりにならない。
+     */
+    result = used;
+  } else {
+    result = ocr;
+  }
+
+  const selected = result.selected ?? [];
+  const engine = result.cropMode === 'band' ? 'tesseract' : 'jsqr';
   const elapsedMs = Math.round(performance.now() - startedAt);
 
   lastCapture = {
-    dataUrl: await canvasToDataUrl(result.crop.canvas),
+    dataUrl: await canvasToDataUrl(result.image ?? result.crop.canvas),
     device: result.crop.device,
     css: result.crop.css,
     // 画像には人工的な白い余白が付いている。位置を重ねる側はこの分をずらす
     padding: result.crop.padding,
-    locatedTarget: located !== null,
+    // 画像は OCR の前処理で拡大されていることがある。候補の位置は切り出し画像の
+    // 座標なので、重ねる側はこの倍率をかける
+    imageScale: result.imageScale ?? 1,
+    cropMode: result.cropMode,
+    ocrText: result.text ?? '',
     viewportImage: shot,
     dpr,
     clamped: result.crop.clamped,
     point,
     // 目視確認画面には、採用しなかったものも含めてすべて出す
     candidates: result.candidates,
-    selectedCount: result.selected.length,
+    selectedCount: selected.length,
     attemptCount,
     elapsedMs,
-    engine: 'jsqr',
+    engine,
   };
 
   return {
@@ -644,17 +831,42 @@ async function recognize(tab, request) {
     // 画像本体は content script へ渡さない（ページ側 CSP に縛られるため）。
     // 表示は拡張ページ側（src/debug/）で行う。
     // 指した位置に対応するものだけを、近い順に渡す。
-    candidates: result.selected,
+    candidates: selected,
     /*
      * QRコードとしては見つかったが、どの符号化でも文字にできなかったものがあるか。
      * 「見つからなかった」と「読めなかった」は原因も次の一手も違うので、
      * パネルの文言を分けるために渡す。
      */
     undecodable: result.candidates.some((candidate) => candidate.kind === 'undecodable'),
-    chosenIndex: result.selected.length > 0 ? 0 : -1,
+    chosenIndex: selected.length > 0 ? 0 : -1,
     attemptCount,
     elapsedMs,
-    engine: 'jsqr',
+    engine,
+  };
+}
+
+/**
+ * OCR が返した語の位置を、切り出し画像の座標（物理ピクセル）へ戻す。
+ *
+ * OCR にかけた画像は前処理で拡大してあるので、その倍率で割る。
+ * 語に対応づけられなかった場合（`findUrlsInWords` が位置を返せなかった場合）は、
+ * 帯そのものを位置として扱う。帯は指した位置を中心に切っているため、
+ * 「指した場所にある」という判定は成立する。
+ */
+function bboxInCropFromOcr(bbox, band) {
+  if (!bbox) {
+    return {
+      x: band.crop.padding,
+      y: band.crop.padding,
+      width: band.crop.device.width,
+      height: band.crop.device.height,
+    };
+  }
+  return {
+    x: Math.round(bbox.x / band.scale),
+    y: Math.round(bbox.y / band.scale),
+    width: Math.round(bbox.width / band.scale),
+    height: Math.round(bbox.height / band.scale),
   };
 }
 
@@ -839,9 +1051,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   /*
-   * 画像を OCR にかける。Phase 1 の入口。
-   * いまは拡張ページ（確認画面・テスト）から呼ぶだけで、照準モードの経路には
-   * まだ繋いでいない（仕様書 §9 Phase 1）。
+   * 画像を OCR にかけるだけの入口。照準モードの経路（`recognize`）とは別に、
+   * 精度計測のハーネス（`work/e2e/ocr-lab.mjs`）から画像を直接渡すために残してある。
    */
   if (type === MESSAGES.OCR) {
     (async () => {

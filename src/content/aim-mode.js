@@ -54,8 +54,16 @@
   const KEY_STEP = 8;
   const KEY_STEP_FINE = 1;
 
+  /**
+   * 設定の取得は非同期なので、間に合わなかったときはこの値で切り出す。
+   * **オーバーレイが読む設定はすべてここに持たせること。** 欠けていると、
+   * 起動直後の1回だけ切り出しが壊れる（実際に `ocrRegion*` の欠落で
+   * 最初の1回だけ OCR が空振りした）。既定値は `src/shared/settings.js` と揃える。
+   */
   const FALLBACK_SETTINGS = {
     qrRegionSize: 560,
+    ocrRegionWidth: 960,
+    ocrRegionHeight: 200,
     openCaptureInTab: false,
   };
 
@@ -229,6 +237,25 @@
       y: clamp(Math.round(pointer.y - side / 2), 0, viewportHeight - side),
       width: side,
       height: side,
+    };
+  }
+
+  /**
+   * 照準位置を中心とした帯状の領域を求める（OCR用）。
+   * URLは横に長く縦に薄いので、正方形ではなく帯で切り出す（仕様書 §4.6）。
+   * 単位はすべて CSS ピクセル・ビューポート基準。
+   */
+  function bandRegion() {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const width = Math.min(settings.ocrRegionWidth, viewportWidth);
+    const height = Math.min(settings.ocrRegionHeight, viewportHeight);
+
+    return {
+      x: clamp(Math.round(pointer.x - width / 2), 0, viewportWidth - width),
+      y: clamp(Math.round(pointer.y - height / 2), 0, viewportHeight - height),
+      width,
+      height,
     };
   }
 
@@ -413,6 +440,8 @@
 
     const point = { x: pointer.x, y: pointer.y };
     const regions = regionsToTry();
+    // QRが見つからなかったときに OCR へ渡す帯（仕様書 §9 Phase 1c）
+    const ocrRegion = bandRegion();
     const dpr = window.devicePixelRatio || 1;
     // 見つかった位置をあとでスクロールに追従させるため、撮る時点の値を控える
     scrollAtCapture = { x: window.scrollX, y: window.scrollY };
@@ -427,6 +456,7 @@
         type: MESSAGES.RECOGNIZE,
         point,
         regions,
+        ocrRegion,
         dpr,
       });
     } catch (error) {
@@ -505,7 +535,11 @@
     renderFoundBox(candidate.bboxCss);
 
     const isUrl = candidate.kind === 'url';
-    ui.title.textContent = t(isUrl ? 'overlayTitleUrl' : 'overlayTitleText');
+    // QRコードから読んだのか、文字として読んだのかを見出しで区別する
+    const fromText = recognition.engine === 'tesseract';
+    ui.title.textContent = isUrl
+      ? t(fromText ? 'overlayTitleUrlOcr' : 'overlayTitleUrl')
+      : t('overlayTitleText');
 
     const parts = [];
     if (candidates.length > 1) {

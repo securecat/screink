@@ -197,8 +197,9 @@ Shadow DOM は使っていない。`insertCSS` は Shadow DOM の中へ届かな
 - [ ] 座標や認識に関わる変更をしたら、デバイス倍率 1 / 1.5 / 2 で E2E スモークテストを通している
 
 ```
-node --experimental-websocket --no-warnings work/e2e/run.mjs    [倍率]  # 照準モードと座標変換
-node --experimental-websocket --no-warnings work/e2e/run-qr.mjs [倍率]  # QR認識と確認UI
+node --experimental-websocket --no-warnings work/e2e/run.mjs     [倍率]  # 照準モードと座標変換
+node --experimental-websocket --no-warnings work/e2e/run-qr.mjs  [倍率]  # QR認識と確認UI
+node --experimental-websocket --no-warnings work/e2e/run-ocr.mjs [倍率]  # OCRの合流（QR→OCRの順序）
 ```
 
 その他の計測用スクリプト：
