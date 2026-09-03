@@ -35,8 +35,8 @@ https://chromewebstore.google.com/detail/screink/jlcokpeegaghadhdfjaoeaoibfgbemb
    - Click it, or
    - Move the crosshair with the arrow keys and press `Enter`
 4. Check the URL screink found, and open it
-   - With direct links on, it opens in a new tab without asking
-   - If the QR code carries text rather than a URL, the panel appears even with direct links on
+   - With **Open URLs directly in a new tab** ticked, it opens without asking
+   - If the QR code carries text rather than a URL, the panel appears even with that ticked
 5. Press `Esc` at any time to leave aim mode
 
 Ordinary clicks are never taken away. screink receives the click only while aim mode is on, so it cannot interfere with the meeting UI underneath.
@@ -54,22 +54,13 @@ QR codes are decoded by [jsQR](https://github.com/cozmo/jsQR) (Apache License 2.
 
 ## Changelog
 
-### [1.1.0] - 2026-09-03
-
-#### Added
-
-- Direct links, a checkbox in the popup. With it on, reading a URL opens it in a new tab straight away instead of showing you the panel first. Off unless you turn it on, and it changes nothing about which URLs may be opened: anything that is not http or https still cannot be, and anything that is not a URL still raises the panel.
-- The inspect page now says how each code was decoded — which encoding produced the text, the QR mode and version, and the raw bytes in hex. A code that cannot be turned into text at all is listed there too, rather than being dropped as if nothing had been found.
+### [1.1.1] - 2026-09-03
 
 #### Changed
 
-- The button on the panel reads "See what was read", and the page it opens is titled to match. It is no longer only about the image.
-- The popup drops the line about keyboard shortcuts. Whoever assigned one knows what they pressed, and the options page is where you learn one can be assigned.
-
-#### Fixed
-
-- QR codes carrying Japanese written in Shift_JIS can be read. jsQR assumes UTF-8 for byte-mode content and quietly discards anything else, so those codes came back as though nothing had been found. The bytes are now decoded here instead — by the encoding the code declares, or failing that as UTF-8 and then Shift_JIS.
-- A code that is found but cannot be turned into text now says so, instead of claiming nothing was found. The two have different next steps.
+- The checkbox in the popup is labelled "Open URLs directly in a new tab". It was named after the feature — "Use direct links" — which says nothing about what happens.
+- The line under it explaining that is gone. The label carries it now, and this is a setting seen every time the popup opens rather than a procedure met once a month.
+- The popup leads with its button. The checkbox sits below it.
 
 For the full history, see [CHANGELOG.md](CHANGELOG.md).
 
@@ -112,8 +103,8 @@ https://chromewebstore.google.com/detail/screink/jlcokpeegaghadhdfjaoeaoibfgbemb
    - クリックする、または
    - 矢印キーで照準を動かして `Enter` を押す
 4. スクリーンクが見つけたURLを確認して開く
-   - ダイレクトリンクをONにしている時は、確認を挟まず新しいタブで開きます
-   - QRコードの内容がテキストデータの場合は、ダイレクトリンクがONでも確認パネルを表示します
+   - **URLは直接タブを開く** をONにしている時は、確認を挟まず新しいタブで開きます
+   - QRコードの内容がテキストデータの場合は、ONでも確認パネルを表示します
 5. `Esc` を押せばいつでも照準モードを解除できます
 
 通常のクリックを奪うことはありません。スクリーンクがクリックを受け取るのは照準モード中だけなので、その下にある会議UIの操作を妨げません。
@@ -131,21 +122,12 @@ QRコードのデコードには[jsQR](https://github.com/cozmo/jsQR)（Apache L
 
 ## 更新履歴
 
-### [1.1.0] - 2026-09-03
-
-#### 追加
-
-- ポップアップに「ダイレクトリンクを使用する」を追加しました。オンにすると、URLを読み取った時点で確認のパネルを出さず、すぐ新しいタブで開きます。既定はオフです。開けるURLの範囲は変わりません。http / https 以外は相変わらず開きませんし、URLでないものは今までどおりパネルに出ます。
-- 読み取った内容を確認する画面に、それをどう読んだかを出すようにしました。どの符号化で文字になったのか、QRコードのモードとバージョン、そしてバイト列そのものを16進で表示します。どうしても文字にできなかったコードも、見つからなかった扱いで捨てずにここへ並べます。
+### [1.1.1] - 2026-09-03
 
 #### 変更
 
-- パネルのボタンを「読み取った内容を確認する」にしました。開く先の画面の見出しも合わせています。もう画像だけの画面ではないためです。
-- ポップアップからショートカットキーの案内を削除しました。割り当てた本人はそのキーを知っていますし、割り当てられること自体はオプション設定に書いてあります。
-
-#### 修正
-
-- Shift_JIS で書かれた日本語のQRコードが読めるようになりました。jsQR はバイトモードの中身を UTF-8 と決めつけ、そうでないものを黙って捨てるため、これらのコードは「見つからなかった」と同じ扱いになっていました。バイト列はこちらで復号するようにしました。コードが符号化を宣言していればそれで、無ければ UTF-8 → Shift_JIS の順に試します。
-- 見つかったのに文字にできなかった場合に、そう伝えるようにしました。「見つからなかった」と言ってしまっていましたが、この2つは次にすることが違います。
+- ポップアップのチェックボックスのラベルを「URLは直接タブを開く」にしました。「ダイレクトリンクを使用する」は機能の名前でしかなく、何が起きるかを言っていませんでした。
+- その下に添えていた説明文を削除しました。ラベルが説明を兼ねますし、ポップアップを開くたびに目に入るものに、毎回の操作説明は要りません。
+- ポップアップの並びを、開始ボタンが先、チェックボックスが後になるようにしました。
 
 全履歴は [CHANGELOG.md](CHANGELOG.md) を参照してください。

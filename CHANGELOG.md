@@ -5,6 +5,14 @@ All notable changes to screink are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - 2026-09-03
+
+### Changed
+
+- The checkbox in the popup is labelled "Open URLs directly in a new tab". It was named after the feature — "Use direct links" — which says nothing about what happens.
+- The line under it explaining that is gone. The label carries it now, and this is a setting seen every time the popup opens rather than a procedure met once a month.
+- The popup leads with its button. The checkbox sits below it.
+
 ## [1.1.0] - 2026-09-03
 
 ### Added
@@ -137,6 +145,14 @@ screink のすべての重要な変更点をこのファイルに記載します
 
 形式は [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) に基づき、
 バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
+
+## [1.1.1] - 2026-09-03
+
+### 変更
+
+- ポップアップのチェックボックスのラベルを「URLは直接タブを開く」にしました。「ダイレクトリンクを使用する」は機能の名前でしかなく、何が起きるかを言っていませんでした。
+- その下に添えていた説明文を削除しました。ラベルが説明を兼ねますし、ポップアップを開くたびに目に入るものに、毎回の操作説明は要りません。
+- ポップアップの並びを、開始ボタンが先、チェックボックスが後になるようにしました。
 
 ## [1.1.0] - 2026-09-03
 
