@@ -14,14 +14,21 @@ const settings = await getSettings().catch(() => ({ ...DEFAULT_SETTINGS }));
 setLanguage(settings.uiLanguage);
 localizePage('optionsTitle');
 
-const statusText = document.querySelector('#status');
 const languageStatus = document.querySelector('#language-status');
 const shortcutText = document.querySelector('#shortcut');
 const shortcutsButton = document.querySelector('#open-shortcuts');
 const languageInputs = [...document.querySelectorAll('input[name="uiLanguage"]')];
 
+/** チェックボックスの設定。設定名と、操作した行に出す「保存できた」の表示。 */
 const checkboxFields = {
-  openCaptureInTab: document.querySelector('#open-capture-in-tab'),
+  directLinkText: {
+    input: document.querySelector('#direct-link-text'),
+    status: document.querySelector('#direct-link-text-status'),
+  },
+  openCaptureInTab: {
+    input: document.querySelector('#open-capture-in-tab'),
+    status: document.querySelector('#status'),
+  },
 };
 
 /*
@@ -30,7 +37,7 @@ const checkboxFields = {
  *
  * どちらも「何をどうしたか」を文言で伝える。色だけで伝えない。
  */
-let savedOpenCapture = null;
+const savedChecks = {};
 let savedLanguage = null;
 
 /*
@@ -45,8 +52,11 @@ function renderTexts() {
     ? t('optionsShortcutBody', [shortcut])
     : t('optionsShortcutNone');
 
-  statusText.textContent =
-    savedOpenCapture === null ? '' : t(savedOpenCapture ? 'optionsSavedOn' : 'optionsSavedOff');
+  for (const [key, field] of Object.entries(checkboxFields)) {
+    const saved = savedChecks[key];
+    field.status.textContent =
+      saved === undefined || saved === null ? '' : t(saved ? 'optionsSavedOn' : 'optionsSavedOff');
+  }
 
   languageStatus.textContent =
     savedLanguage === null
@@ -55,7 +65,7 @@ function renderTexts() {
 }
 
 function populate(current) {
-  checkboxFields.openCaptureInTab.checked = current.openCaptureInTab;
+  for (const [key, field] of Object.entries(checkboxFields)) field.input.checked = current[key];
 
   // 未設定のときはブラウザのUI言語に合わせた側を選んでおく
   const language = resolveLanguage(current.uiLanguage);
@@ -75,15 +85,18 @@ function populate(current) {
  * なっていたため。いまは表示をラベルと同じ行に置いてあるので、消えても何も動かない。
  */
 document.addEventListener('focusin', (event) => {
-  if (!Object.values(checkboxFields).includes(event.target)) savedOpenCapture = null;
+  // 操作中のコントロールの表示だけ残す
+  for (const [key, field] of Object.entries(checkboxFields)) {
+    if (field.input !== event.target) savedChecks[key] = null;
+  }
   if (!languageInputs.includes(event.target)) savedLanguage = null;
   renderTexts();
 });
 
-for (const [key, input] of Object.entries(checkboxFields)) {
-  input.addEventListener('change', async () => {
-    await saveSetting(key, input.checked);
-    savedOpenCapture = input.checked;
+for (const [key, field] of Object.entries(checkboxFields)) {
+  field.input.addEventListener('change', async () => {
+    await saveSetting(key, field.input.checked);
+    savedChecks[key] = field.input.checked;
     renderTexts();
   });
 }
@@ -110,7 +123,7 @@ for (const input of languageInputs) {
  * 離れているあいだの消去なので、操作の瞬間にレイアウトが動くことはない。
  */
 window.addEventListener('blur', () => {
-  savedOpenCapture = null;
+  for (const key of Object.keys(checkboxFields)) savedChecks[key] = null;
   savedLanguage = null;
   renderTexts();
 });

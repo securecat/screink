@@ -56,8 +56,21 @@ export const DEFAULT_SETTINGS = {
    * 既定は off。読み取った内容を見せてから開くのが基本の作りであり、
    * それを省くのはユーザーが明示的に選んだときだけとする（仕様書 §5.4）。
    * URLでなかった場合・見つからなかった場合は、on でもパネルを出す。
+   *
+   * **こちらはQRコードから読んだURLだけに効く。** QRコードは規格に誤り訂正が
+   * 内蔵されていて、デコードできた結果は正解である。置き場所はポップアップ
+   * （使うたびに変わりうる選択のため）。
    */
   directLink: false,
+
+  /**
+   * 文字として読んだ（OCR）URLを、確認パネルを出さずに直ちに新しいタブで開く。
+   *
+   * `directLink` とは独立に効く。OCR は1字違いが起きるため、QRとは別の判断として
+   * 分けてある。置き場所はオプション設定（「読み取りの精度を承知のうえで使う」という
+   * 据え置きの表明であり、使うたびに変える種類の選択ではないため。仕様書 §5.4）。
+   */
+  directLinkText: false,
 };
 
 export const SETTING_LIMITS = {
@@ -90,6 +103,7 @@ export async function getSettings() {
     ocrRegionHeight: clampNumber('ocrRegionHeight', stored.ocrRegionHeight),
     openCaptureInTab: Boolean(stored.openCaptureInTab),
     directLink: Boolean(stored.directLink),
+    directLinkText: Boolean(stored.directLinkText),
   };
 }
 

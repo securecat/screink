@@ -1107,15 +1107,20 @@ async function runOcr(dataUrl) {
  * 候補は近い順に並んでいるので、先頭が「指した位置にいちばん近いURL」になる。
  * 開けたらその URL、開かなかった・開けなかったら null を返す。
  *
- * **QRコードから読んだものだけを開く。** QRコードは規格に誤り訂正が内蔵されていて、
- * デコードできた結果は正解である。一方 OCR は1字違いが起きる（実測で `?id=7` が
- * `?id=T7` になった。仕様書 §17）。読み取ったものを見ずに開いてよいと言えるのは
- * 前者だけなので、OCR の結果は確認パネルを経る（仕様書 §5.4）。
+ * **QRコードと文字とで、確認を省いてよいかの設定を分けている（仕様書 §5.4）。**
+ * QRコードは規格に誤り訂正が内蔵されていて、デコードできた結果は正解である。
+ * 一方 OCR は1字違いが起きる（実測で `?id=7` が `?id=T7` になった。§17）。
+ * 見ずに開いてよいと言えるかどうかが違うので、設定も別にしてある。
  *
  * @param {Array<{kind: string, engine: string, url: string | null}>} candidates
+ * @param {{directLink: boolean, directLinkText: boolean}} settings
  */
-async function openFirstUrl(candidates) {
-  const candidate = candidates.find((entry) => entry.kind === 'url' && entry.engine === 'jsqr');
+async function openFirstUrl(candidates, settings) {
+  const candidate = candidates.find(
+    (entry) =>
+      entry.kind === 'url' &&
+      (entry.engine === 'tesseract' ? settings.directLinkText : settings.directLink),
+  );
   const url = candidate ? toSafeUrl(candidate.url) : null;
   if (!url) return null;
 
@@ -1184,15 +1189,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         /*
          * ダイレクトリンクが on なら、確認パネルを経ずにここで開く。
+         * QRコードと文字とで設定が分かれている（仕様書 §5.4）。
          *
          * 開く直前に `toSafeUrl()` を通すのは、確認を挟む経路と同じ。
          * 確認UIを省いても、http / https 以外を開かないという保証は変わらない
          * （仕様書 §5.2・§5.4）。
          *
-         * URLでない候補（テキストのQRコード）や、OCR が文字から読んだもの、
-         * 見つからなかった場合は開かない。その場合は今までどおりパネルを出す。
+         * URLでない候補（テキストのQRコード）や、見つからなかった場合は開かない。
+         * その場合は今までどおりパネルを出す。
          */
-        const opened = settings.directLink ? await openFirstUrl(result.candidates) : null;
+        const opened = await openFirstUrl(result.candidates, settings);
         sendResponse({
           ok: true,
           ...result,
