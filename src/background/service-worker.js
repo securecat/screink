@@ -84,12 +84,35 @@ const MAX_DECODE_SIDE = 1200;
 const OCR_TARGET_SCALE = 2.5;
 const OCR_MIN_SCALE = 1;
 const OCR_MAX_SCALE = 3;
-/** OCR にかける画像の一辺の上限（物理ピクセル）。これを超えないよう倍率を抑える。 */
-const OCR_MAX_SIDE = 2600;
+/**
+ * OCR にかける画像の画素数の上限。これを超えないよう倍率を抑える。
+ * 認識にかかる時間はおおむね画素数に比例するので、一辺ではなく面積で抑える
+ * （帯は横に長いため、一辺で抑えると横に伸びたときだけ極端に解像度が落ちる）。
+ */
+const OCR_MAX_PIXELS = 1_600_000;
 /** コントラストを伸ばすときに、両端で切り落とす画素の割合。 */
 const OCR_CLIP_RATIO = 0.02;
 /** 明暗の幅がこれ未満なら伸ばさない（単色に近い面をノイズだけ強調しないため）。 */
 const OCR_MIN_RANGE = 24;
+
+/* ------------------------------------------------------------------ *
+ * 指した行の広がりを調べるための定数（`locateTextRun` を参照）
+ * ------------------------------------------------------------------ */
+
+/** 行を追うときの縮小後の幅の上限（物理ピクセル）。粗くてよい。 */
+const TEXT_MAX_WIDTH = 1400;
+/** 背景の明るさとの差がこれを超える画素を「文字がある」と見なす。 */
+const TEXT_INK_DELTA = 48;
+/** 行の縦の範囲を測るとき、指した位置の左右この範囲だけを見る（縮小後の画素）。 */
+const TEXT_LOCAL_WINDOW = 120;
+/** 行の縦を追うときに許す空白（縮小後の画素）。文字の間の隙間で切らないため。 */
+const TEXT_ROW_GAP = 2;
+/** 横に追うときに許す空白を、行の高さの何倍までとするか。 */
+const TEXT_GAP_RATIO = 1.2;
+/** 追った結果の左右に足す余白を、行の高さの何倍にするか。 */
+const TEXT_MARGIN_RATIO = 0.5;
+/** これより狭い結果は使わない（CSSピクセル）。 */
+const TEXT_MIN_WIDTH = 48;
 
 /* ------------------------------------------------------------------ *
  * 指した対象の輪郭を探すための定数（`locateTarget` を参照）
@@ -257,13 +280,13 @@ function cropRegion(bitmap, shot, region, dpr) {
  * @returns {{canvas: OffscreenCanvas, scale: number}} scale は source に対する倍率
  */
 function preprocessForOcr(source, dpr) {
-  // 上限は3倍と一辺2600px。どちらに当たっても、縮小はしない（下限は等倍）
+  // 上限は3倍と画素数。どちらに当たっても、縮小はしない（下限は等倍）
   const scale = Math.max(
     OCR_MIN_SCALE,
     Math.min(
       OCR_TARGET_SCALE / dpr,
       OCR_MAX_SCALE,
-      OCR_MAX_SIDE / Math.max(source.width, source.height),
+      Math.sqrt(OCR_MAX_PIXELS / (source.width * source.height)),
     ),
   );
 
@@ -316,6 +339,150 @@ function preprocessForOcr(source, dpr) {
   ctx.putImageData(image, 0, 0);
 
   return { canvas, scale };
+}
+
+/* ------------------------------------------------------------------ *
+ * 指した行が横にどこまで続いているかを調べる
+ * ------------------------------------------------------------------ */
+
+/**
+ * 指した位置にある文字の並びが、横にどこまで続いているかを求める。
+ *
+ * なぜこれが要るか：
+ * OCR用の帯の幅を固定にすると、**長いURLが帯の端で切れる。** 実機で
+ * `...&chancnt=0&lan=1` の `chancnt` の途中までしか読めなかった（仕様書 §17）。
+ * 切れた場所の字は欠けた形になるため、別の字として読まれもする。
+ *
+ * QRコードで「指した対象の輪郭に合わせて切り出す」（`locateTarget`）のと
+ * 同じ考え方を、横に長い対象へ当てたもの。**横に何かが連なる限り切らない。**
+ *
+ * 手順：
+ *   1. 帯の高さ分だけを見て、指した位置の近くで「文字がある行」を探す
+ *   2. その行の上下の広がりを求める（＝行の高さ）
+ *   3. 行の範囲だけで縦に潰した明暗から、指した列を起点に左右へ広げる。
+ *      行の高さの 1.2 倍を超える空白に当たったら、そこで途切れたと見なす
+ *
+ * 縦は動かさない。帯の高さは設定のまま、指した位置を中心にする
+ * （行の検出を外したときに、読める範囲が狭くならないようにするため）。
+ *
+ * @param {ImageBitmap} bitmap キャプチャ画像
+ * @param {{width:number, height:number}} shot キャプチャ画像の物理ピクセル寸法
+ * @param {{x:number, y:number}} point 指した位置（CSSピクセル）
+ * @param {number} dpr
+ * @param {number} heightCss 帯の高さ（CSSピクセル）
+ * @returns {{x:number, width:number} | null} CSSピクセル。求まらなければ null
+ */
+function locateTextRun(bitmap, shot, point, dpr, heightCss) {
+  const bandHeight = Math.max(Math.round(heightCss * dpr), 1);
+  const sy = Math.min(
+    Math.max(Math.round(point.y * dpr - bandHeight / 2), 0),
+    Math.max(shot.height - 1, 0),
+  );
+  const sh = Math.max(Math.min(bandHeight, shot.height - sy), 1);
+
+  const scale = Math.min(1, TEXT_MAX_WIDTH / shot.width);
+  const width = Math.max(1, Math.round(shot.width * scale));
+  const height = Math.max(1, Math.round(sh * scale));
+
+  const canvas = new OffscreenCanvas(width, height);
+  const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
+  ctx.drawImage(bitmap, 0, sy, shot.width, sh, 0, 0, width, height);
+  const { data } = ctx.getImageData(0, 0, width, height);
+
+  /*
+   * 背景の明るさは最頻値で決める。白地に黒でも暗い背景に白でも同じ扱いになり、
+   * 「背景から離れた画素＝文字」と言えるようになる。
+   */
+  const luma = new Uint8Array(width * height);
+  const histogram = new Uint32Array(32);
+  for (let i = 0, p = 0; p < luma.length; i += 4, p += 1) {
+    // 輝度の近似（緑を重く見る）。`locateTarget` と同じ式
+    const value = Math.round((data[i] * 3 + data[i + 1] * 6 + data[i + 2]) / 10);
+    luma[p] = value;
+    histogram[value >> 3] += 1;
+  }
+  let bucket = 0;
+  for (let index = 1; index < histogram.length; index += 1) {
+    if (histogram[index] > histogram[bucket]) bucket = index;
+  }
+  const background = bucket * 8 + 4;
+  const isInk = (x, y) => Math.abs(luma[y * width + x] - background) > TEXT_INK_DELTA;
+
+  const pointX = Math.min(Math.max(Math.round(point.x * dpr * scale), 0), width - 1);
+  const pointY = Math.min(Math.max(Math.round((point.y * dpr - sy) * scale), 0), height - 1);
+
+  // 行の縦の範囲は、指した位置の近くだけを見て測る（別の段の行に引きずられないため）
+  const from = Math.max(pointX - TEXT_LOCAL_WINDOW, 0);
+  const to = Math.min(pointX + TEXT_LOCAL_WINDOW, width - 1);
+  const rowHasInk = new Uint8Array(height);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = from; x <= to; x += 1) {
+      if (isInk(x, y)) {
+        rowHasInk[y] = 1;
+        break;
+      }
+    }
+  }
+
+  // 指した行。少し外していても、いちばん近い行に寄せる
+  const reach = Math.max(2, Math.round(height * 0.25));
+  let seed = -1;
+  for (let distance = 0; distance <= reach && seed < 0; distance += 1) {
+    if (pointY - distance >= 0 && rowHasInk[pointY - distance]) seed = pointY - distance;
+    else if (pointY + distance < height && rowHasInk[pointY + distance]) seed = pointY + distance;
+  }
+  if (seed < 0) return null;
+
+  let top = seed;
+  for (let y = seed - 1, gap = 0; y >= 0; y -= 1) {
+    if (rowHasInk[y]) {
+      top = y;
+      gap = 0;
+    } else if ((gap += 1) > TEXT_ROW_GAP) break;
+  }
+  let bottom = seed;
+  for (let y = seed + 1, gap = 0; y < height; y += 1) {
+    if (rowHasInk[y]) {
+      bottom = y;
+      gap = 0;
+    } else if ((gap += 1) > TEXT_ROW_GAP) break;
+  }
+  const lineHeight = bottom - top + 1;
+
+  // 行の範囲を縦に潰して、文字のある列を求める
+  const columnHasInk = new Uint8Array(width);
+  for (let y = top; y <= bottom; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (!columnHasInk[x] && isInk(x, y)) columnHasInk[x] = 1;
+    }
+  }
+
+  const gapLimit = Math.max(4, Math.round(lineHeight * TEXT_GAP_RATIO));
+  let left = pointX;
+  for (let x = pointX, gap = 0; x >= 0; x -= 1) {
+    if (columnHasInk[x]) {
+      left = x;
+      gap = 0;
+    } else if ((gap += 1) > gapLimit) break;
+  }
+  let right = pointX;
+  for (let x = pointX, gap = 0; x < width; x += 1) {
+    if (columnHasInk[x]) {
+      right = x;
+      gap = 0;
+    } else if ((gap += 1) > gapLimit) break;
+  }
+
+  const margin = Math.max(4, Math.round(lineHeight * TEXT_MARGIN_RATIO));
+  const x0 = Math.max(left - margin, 0);
+  const x1 = Math.min(right + margin, width - 1);
+
+  // 縮小画像 -> 物理ピクセル -> CSSピクセル
+  const cssX = x0 / scale / dpr;
+  const cssWidth = (x1 - x0 + 1) / scale / dpr;
+  if (cssWidth < TEXT_MIN_WIDTH) return null;
+
+  return { x: cssX, width: cssWidth };
 }
 
 /* ------------------------------------------------------------------ *
@@ -717,11 +884,13 @@ async function recognize(tab, request) {
       const candidates = detectQrCodes(crop.canvas).map((code) =>
         toCandidate(code, crop, dpr, point),
       );
-      if (used === null || candidates.length > 0) used = { crop, cropMode, candidates };
+      if (used === null || candidates.length > 0) {
+        used = { crop, cropMode, engine: 'jsqr', candidates };
+      }
 
       const selected = selectCandidates(candidates);
       if (selected.length > 0) {
-        matched = { crop, cropMode, candidates, selected };
+        matched = { crop, cropMode, engine: 'jsqr', candidates, selected };
         break;
       }
     }
@@ -731,8 +900,15 @@ async function recognize(tab, request) {
      * OCR の応答を待つ間キャプチャ画像（数MB）を抱えたままにしないため。
      */
     if (matched === null && request.ocrRegion) {
-      const crop = cropRegion(bitmap, shot, request.ocrRegion, dpr);
-      band = { crop, ...preprocessForOcr(crop.canvas, dpr) };
+      /*
+       * 帯の幅は、指した行が横にどこまで続いているかで決める。
+       * 固定幅にすると長いURLが端で切れる（`locateTextRun`）。
+       * 求まらなければ、content script が計算した固定の帯をそのまま使う。
+       */
+      const run = locateTextRun(bitmap, shot, point, dpr, request.ocrRegion.height);
+      const region = run ? { ...request.ocrRegion, ...run } : request.ocrRegion;
+      const crop = cropRegion(bitmap, shot, region, dpr);
+      band = { crop, mode: run ? 'line' : 'band', ...preprocessForOcr(crop.canvas, dpr) };
     }
   } finally {
     bitmap.close();
@@ -760,7 +936,8 @@ async function recognize(tab, request) {
       );
       ocr = {
         crop: band.crop,
-        cropMode: 'band',
+        cropMode: band.mode,
+        engine: 'tesseract',
         candidates,
         selected: selectCandidates(candidates),
         // 目視確認用。読んだ文字を見せないと、URLが出ない理由が分からない
@@ -794,7 +971,7 @@ async function recognize(tab, request) {
   }
 
   const selected = result.selected ?? [];
-  const engine = result.cropMode === 'band' ? 'tesseract' : 'jsqr';
+  const engine = result.engine;
   const elapsedMs = Math.round(performance.now() - startedAt);
 
   lastCapture = {

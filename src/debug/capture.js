@@ -32,6 +32,7 @@ const CROP_MODE_KEYS = {
   located: 'debugCropLocated',
   ladder: 'debugCropLadder',
   band: 'debugCropBand',
+  line: 'debugCropLine',
 };
 
 function describeGeometry(capture) {
