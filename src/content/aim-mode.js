@@ -560,6 +560,72 @@
     showCandidate();
   }
 
+  /**
+   * 候補ごとに中身が変わる部分（補足・開く先・読み取った文字列）を差し替える。
+   *
+   * 高さを測るために全候補ぶん呼ぶので、副作用のある処理（枠の描画・
+   * フォーカス移動）はここに置かないこと。
+   */
+  function fillCandidate(candidate, index, total) {
+    const parts = [];
+    if (total > 1) {
+      parts.push(t('overlayCandidateCount', [String(index + 1), String(total)]));
+    }
+    if (!candidate.containsPoint) {
+      parts.push(t('overlayFarFromPoint'));
+    }
+    ui.body.textContent = parts.join(' / ');
+    ui.body.hidden = parts.length === 0;
+
+    if (candidate.kind === 'url') {
+      ui.destination.hidden = false;
+      ui.destinationHost.textContent = hostnameOf(candidate.url);
+      ui.payload.textContent = candidate.url;
+    } else {
+      ui.destination.hidden = true;
+      ui.payload.textContent = candidate.text;
+    }
+    ui.payload.hidden = false;
+  }
+
+  /** いま表示している「候補ごとに変わる部分」の高さ（余白込み）。 */
+  function variableHeight() {
+    const heightOf = (node) => {
+      if (node.hidden) return 0;
+      const style = getComputedStyle(node);
+      // 読み取った文字列は max-height を超えると中でスクロールする。
+      // offsetHeight はその上限までしか返さないので、そのまま使える
+      return node.offsetHeight + (parseFloat(style.marginBottom) || 0);
+    };
+    return heightOf(ui.body) + heightOf(ui.destination) + heightOf(ui.payload);
+  }
+
+  /**
+   * 候補を切り替えてもパネルの高さが変わらないようにする。
+   *
+   * 長さの違うURLが混ざっていると、切り替えるたびにパネルが伸び縮みし、
+   * 「次の候補」ボタンが動いて押しにくい（パネルを上に寄せているときは特に）。
+   * 全候補ぶんの高さを測って、いちばん高いものとの差を読み取った文字列の
+   * 下に足しておく。候補が1つなら何もしない。
+   *
+   * 測るにはパネルが出ている必要がある。呼ぶ前に `hidden` を外しておくこと
+   * （同じタスクの中なので、描画される前に確定してちらつかない）。
+   */
+  function reserveHeight(candidates) {
+    ui.payload.style.minHeight = '';
+    if (candidates.length <= 1) return;
+
+    let tallest = 0;
+    for (let index = 0; index < candidates.length; index += 1) {
+      fillCandidate(candidates[index], index, candidates.length);
+      tallest = Math.max(tallest, variableHeight());
+    }
+
+    fillCandidate(candidates[candidateIndex], candidateIndex, candidates.length);
+    const slack = tallest - variableHeight();
+    if (slack > 0) ui.payload.style.minHeight = `${ui.payload.offsetHeight + slack}px`;
+  }
+
   function showCandidate() {
     const candidates = recognition.candidates;
     const candidate = candidates[candidateIndex];
@@ -573,30 +639,13 @@
       ? t(fromText ? 'overlayTitleUrlOcr' : 'overlayTitleUrl')
       : t('overlayTitleText');
 
-    const parts = [];
-    if (candidates.length > 1) {
-      parts.push(
-        t('overlayCandidateCount', [String(candidateIndex + 1), String(candidates.length)]),
-      );
-    }
-    if (!candidate.containsPoint) {
-      parts.push(t('overlayFarFromPoint'));
-    }
-    ui.body.textContent = parts.join(' / ');
-    ui.body.hidden = parts.length === 0;
-
-    if (isUrl) {
-      ui.destination.hidden = false;
-      ui.destinationHost.textContent = hostnameOf(candidate.url);
-      ui.payload.textContent = candidate.url;
-    } else {
-      ui.destination.hidden = true;
-      ui.payload.textContent = candidate.text;
-    }
-    ui.payload.hidden = false;
-
     ui.note.textContent = `${recognition.engine} / ${recognition.elapsedMs} ms`;
     ui.note.hidden = false;
+
+    // 高さを測るために先に出す（描画はこのタスクが終わってからなのでちらつかない）
+    ui.panel.hidden = false;
+    fillCandidate(candidate, candidateIndex, candidates.length);
+    reserveHeight(candidates);
 
     ui.openButton.hidden = !isUrl;
     ui.copyButton.hidden = false;
@@ -606,7 +655,6 @@
     ui.debugButton.hidden = false;
     updatePrimaryActions();
 
-    ui.panel.hidden = false;
     (isUrl ? ui.openButton : ui.copyButton).focus({ preventScroll: true });
   }
 
