@@ -144,7 +144,15 @@
     const status = el('p', 'screink-panel__status');
     status.setAttribute('role', 'status');
 
-    const actions = el('div', 'screink-panel__actions');
+    /*
+     * ボタンは2行に分ける。
+     *   1行目：読み取ったものに対する操作（開く・コピー・次の候補）と、その結果
+     *   2行目：読み取りそのものに対する操作（もう一度指す・確認する・閉じる）
+     * 「もう一度指す」を常に2行目の先頭に置くことで、候補があってもなくても
+     * 同じ位置にあることになる。
+     */
+    const actionsPrimary = el('div', 'screink-panel__actions screink-panel__actions--primary');
+    const actionsSecondary = el('div', 'screink-panel__actions');
 
     const openButton = el('button', 'screink-button');
     openButton.type = 'button';
@@ -154,7 +162,7 @@
     copyButton.type = 'button';
     copyButton.textContent = t('overlayCopyText');
 
-    const nextButton = el('button', 'screink-button screink-button--secondary');
+    const nextButton = el('button', 'screink-button screink-button--secondary screink-button--next');
     nextButton.type = 'button';
     nextButton.textContent = t('overlayNext');
 
@@ -170,8 +178,10 @@
     closeButton.type = 'button';
     closeButton.textContent = t('overlayClose');
 
-    actions.append(openButton, copyButton, nextButton, retryButton, debugButton, closeButton);
-    panel.append(title, body, destination, payload, note, status, actions);
+    // 状態（「コピーしました」など）は1行目の最後に出す。押したボタンの隣で読める
+    actionsPrimary.append(openButton, copyButton, nextButton, status);
+    actionsSecondary.append(retryButton, debugButton, closeButton);
+    panel.append(title, body, destination, payload, note, actionsPrimary, actionsSecondary);
 
     return {
       panel,
@@ -182,6 +192,7 @@
       payload,
       note,
       status,
+      actionsPrimary,
       openButton,
       copyButton,
       nextButton,
@@ -493,6 +504,27 @@
     ui.catcher.focus({ preventScroll: true });
   }
 
+  /**
+   * 状態（「コピーしました」など）を出す。
+   * 1行目の最後に置いてあるので、行ごと隠れていないかも見直す。
+   */
+  function setStatus(text) {
+    ui.status.textContent = text;
+    updatePrimaryActions();
+  }
+
+  /**
+   * ボタンの1行目を、中身があるときだけ出す。
+   * 見つからなかったときは開くボタンもコピーボタンも無いので、空の行が
+   * 「もう一度指す」の上に隙間として残ってしまう。状態だけがあるときは出す。
+   */
+  function updatePrimaryActions() {
+    const hasButton = [ui.openButton, ui.copyButton, ui.nextButton].some(
+      (button) => !button.hidden,
+    );
+    ui.actionsPrimary.hidden = !hasButton && ui.status.textContent === '';
+  }
+
   function showResult(response) {
     if (!ui) return;
 
@@ -572,6 +604,7 @@
     ui.nextButton.hidden = candidates.length <= 1;
     ui.retryButton.hidden = false;
     ui.debugButton.hidden = false;
+    updatePrimaryActions();
 
     ui.panel.hidden = false;
     (isUrl ? ui.openButton : ui.copyButton).focus({ preventScroll: true });
@@ -596,6 +629,7 @@
     ui.nextButton.hidden = true;
     ui.retryButton.hidden = false;
     ui.debugButton.hidden = false;
+    updatePrimaryActions();
 
     ui.panel.hidden = false;
     ui.retryButton.focus({ preventScroll: true });
@@ -616,6 +650,7 @@
     ui.nextButton.hidden = true;
     ui.retryButton.hidden = false;
     ui.debugButton.hidden = true;
+    updatePrimaryActions();
 
     ui.panel.hidden = false;
     ui.retryButton.focus({ preventScroll: true });
@@ -664,10 +699,9 @@
       exit();
       return;
     }
-    ui.status.textContent =
-      response?.reason === 'unsafe-url'
-        ? t('overlayUnsafeUrl')
-        : t('overlayOpenFailed');
+    setStatus(
+      response?.reason === 'unsafe-url' ? t('overlayUnsafeUrl') : t('overlayOpenFailed'),
+    );
   }
 
   async function copyCandidate() {
@@ -677,18 +711,18 @@
 
     try {
       await navigator.clipboard.writeText(text);
-      ui.status.textContent = t('overlayCopied');
+      setStatus(t('overlayCopied'));
     } catch {
       // ページの権限ポリシーでクリップボードが使えないことがある。
       // その場合は手で選択してもらう（テキストは選択可能にしてある）。
-      ui.status.textContent = t('overlayCopyFailed');
+      setStatus(t('overlayCopyFailed'));
     }
   }
 
   function showNextCandidate() {
     if (!recognition?.candidates?.length) return;
     candidateIndex = (candidateIndex + 1) % recognition.candidates.length;
-    ui.status.textContent = '';
+    setStatus('');
     showCandidate();
   }
 
@@ -696,7 +730,7 @@
     try {
       await chrome.runtime.sendMessage({ type: MESSAGES.OPEN_CAPTURE_TAB });
     } catch (error) {
-      ui.status.textContent = t('overlayInspectFailed');
+      setStatus(t('overlayInspectFailed'));
       console.warn('[screink] 切り出し画像を開けませんでした:', error);
     }
   }

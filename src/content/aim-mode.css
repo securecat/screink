@@ -270,9 +270,13 @@
 }
 
 /* 操作結果のメッセージ。自動では消さない。 */
+/*
+ * 状態（「コピーしました」など）はボタンの1行目の最後に置く。
+ * 押したボタンのすぐ隣に出るので、視線を動かさずに読める。
+ */
 .screink-panel__status {
   display: block !important;
-  margin: 0 0 12px !important;
+  margin: 0 !important;
   color: var(--screink-text) !important;
   font-size: 16px !important;
 }
@@ -284,7 +288,21 @@
 .screink-panel__actions {
   display: flex !important;
   flex-wrap: wrap !important;
+  align-items: center !important;
   gap: 12px !important;
+}
+
+/*
+ * [hidden] は UA スタイルなので、上の display: flex !important に負ける。
+ * 明示的に打ち消す（1行目は中身が無いときに畳む）。
+ */
+.screink-panel__actions[hidden] {
+  display: none !important;
+}
+
+/* 1行目と2行目の間だけ空ける。1行目が畳まれているときは空けない */
+.screink-panel__actions--primary:not([hidden]) + .screink-panel__actions {
+  margin-top: 12px !important;
 }
 
 .screink-button {
@@ -309,6 +327,19 @@
   color: var(--screink-text) !important;
   border: 2px solid var(--screink-ui-border) !important;
   font-weight: 400 !important;
+}
+
+/*
+ * 「次の候補」は、押しても画面が変わらず中身だけが入れ替わるボタン。
+ * 他と役割が違うことが分かるよう、境界線を二重にする。
+ *
+ * border-style: double は線が3px未満だと1本に見えるため6pxにし、
+ * その分 padding を減らして外側の大きさを他のボタンと揃える。
+ */
+.screink-button--next {
+  padding: 6px 14px !important;
+  border-width: 6px !important;
+  border-style: double !important;
 }
 
 /* 押せることが分かるよう、ホバーでラベルに下線を引く */
