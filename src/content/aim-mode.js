@@ -775,12 +775,24 @@
   }
 
   async function openCaptureTab() {
+    /*
+     * 新しいタブが前に出て、注視がそちらへ移る。それまでの操作結果の表示は
+     * ここで消す（A11Y.md「インタラクション」。時間では消さず、注視が移ったことが
+     * 明白なタイミングで消す）。開けなかったときだけ、そのことを出し直す。
+     */
+    setStatus('');
     try {
       await chrome.runtime.sendMessage({ type: MESSAGES.OPEN_CAPTURE_TAB });
     } catch (error) {
       setStatus(t('overlayInspectFailed'));
       console.warn('[screink] 切り出し画像を開けませんでした:', error);
     }
+  }
+
+  /** ページから注視が外れたときも、操作結果の表示は消す（同上）。 */
+  function onWindowBlur() {
+    if (!ui) return;
+    setStatus('');
   }
 
   /* ---------------------------------------------------------------- *
@@ -937,6 +949,7 @@
     on(ui.debugButton, 'click', openCaptureTab);
     on(ui.closeButton, 'click', exit);
     on(window, 'keydown', onKeyDown, true);
+    on(window, 'blur', onWindowBlur);
     on(window, 'resize', onViewportChange);
     on(window, 'scroll', onPageScroll, { passive: true });
     on(document, 'fullscreenchange', remount);
