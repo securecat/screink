@@ -1188,7 +1188,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           await chrome.tabs.create({ url: chrome.runtime.getURL('src/debug/capture.html') });
         }
         /*
-         * ダイレクトリンクが on なら、確認パネルを経ずにここで開く。
+         * ダイレクトリンクがONなら、確認パネルを経ずにここで開く。
          * QRコードと文字とで設定が分かれている（仕様書 §5.4）。
          *
          * 開く直前に `toSafeUrl()` を通すのは、確認を挟む経路と同じ。
