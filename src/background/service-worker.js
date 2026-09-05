@@ -831,10 +831,33 @@ function selectCandidates(candidates) {
  *          regions: Array<{x:number,y:number,width:number,height:number}>,
  *          ocrRegion?: {x:number,y:number,width:number,height:number}}} request
  */
+/**
+ * 画面を1枚撮る。
+ *
+ * `captureVisibleTab` には毎秒の呼び出し回数の上限があり、続けて指すと
+ * （「もう一度指す」を続けて押したときなど）読み取りがまるごと失敗する。
+ * しかも返るのは「画面を取得できませんでした。タブが表示されているか確認して
+ * ください」という、原因と関係のない案内になる。
+ *
+ * **待てば通るものなので、1回だけ間を空けて撮り直す。**
+ * それでも駄目なら、そのまま失敗として返す。
+ */
+const CAPTURE_RETRY_WAIT = 700;
+
+async function captureTab(tab) {
+  try {
+    return await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+  } catch (error) {
+    if (!/quota/i.test(String(error))) throw error;
+    await new Promise((resolve) => setTimeout(resolve, CAPTURE_RETRY_WAIT));
+    return chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+  }
+}
+
 async function recognize(tab, request) {
   const startedAt = performance.now();
 
-  const shotDataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+  const shotDataUrl = await captureTab(tab);
   const bitmap = await createImageBitmap(dataUrlToBlob(shotDataUrl));
   // close() したあとは width / height が 0 になるので先に取っておく
   const shot = { width: bitmap.width, height: bitmap.height };
