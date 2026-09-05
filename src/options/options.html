@@ -44,25 +44,25 @@
       </p>
 
       <div class="field field--check">
-        <input type="checkbox" id="multiline-url" name="multilineUrl" />
-        <label for="multiline-url" data-i18n="optionsMultilineLabel">
-          Read a URL that runs across more than one line
-        </label>
-        <span class="save-status" id="multiline-url-status" role="status"></span>
-      </div>
-
-      <p class="note" data-i18n="optionsMultilineNote">
-        Whether the line below carries on the URL above it cannot be told for certain from a
-        picture — it may just be the next sentence. With this ON, a line that begins where the
-        one above left off, in characters a URL can be written with, is taken as its continuation.
-      </p>
-
-      <div class="field field--check">
         <input type="checkbox" id="direct-link-text" name="directLinkText" />
         <label for="direct-link-text" data-i18n="optionsTextUrlLabel">
           Open URLs read from text directly in a new tab
         </label>
         <span class="save-status" id="direct-link-text-status" role="status"></span>
+      </div>
+
+      <p class="note" data-i18n="optionsMultilineNote">
+        Whether the line below carries on the URL above it cannot be told for certain from a
+        picture — it may just be the next sentence. With this ON, a line that carries on in the
+        same colour, with no change of underline, is taken as the continuation.
+      </p>
+
+      <div class="field field--check">
+        <input type="checkbox" id="multiline-url" name="multilineUrl" />
+        <label for="multiline-url" data-i18n="optionsMultilineLabel">
+          Read a URL that runs across more than one line
+        </label>
+        <span class="save-status" id="multiline-url-status" role="status"></span>
       </div>
 
       <h2 data-i18n="optionsInspectHeading">See what was read</h2>
