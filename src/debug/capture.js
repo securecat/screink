@@ -77,19 +77,25 @@ function renderMarkers(capture, image) {
   });
 
   capture.candidates.forEach((candidate, index) => {
-    const box = el('div', 'marker marker--box');
-    if (candidate.near) box.classList.add('marker--chosen');
-    const label = el('span', 'marker__label');
-    label.textContent = String(index + 1);
-    box.append(label);
-    markers.push({
-      node: box,
-      place: (k) => {
-        box.style.left = `${candidate.bboxInCrop.x * k}px`;
-        box.style.top = `${candidate.bboxInCrop.y * k}px`;
-        box.style.width = `${candidate.bboxInCrop.width * k}px`;
-        box.style.height = `${candidate.bboxInCrop.height * k}px`;
-      },
+    // 折り返されたURLは行ごとに囲む（仕様書 §5.5）。番号は最初の行にだけ付ける
+    const boxes = candidate.bboxesInCrop ?? [candidate.bboxInCrop];
+    boxes.forEach((bbox, part) => {
+      const box = el('div', 'marker marker--box');
+      if (candidate.near) box.classList.add('marker--chosen');
+      if (part === 0) {
+        const label = el('span', 'marker__label');
+        label.textContent = String(index + 1);
+        box.append(label);
+      }
+      markers.push({
+        node: box,
+        place: (k) => {
+          box.style.left = `${bbox.x * k}px`;
+          box.style.top = `${bbox.y * k}px`;
+          box.style.width = `${bbox.width * k}px`;
+          box.style.height = `${bbox.height * k}px`;
+        },
+      });
     });
   });
 

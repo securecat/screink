@@ -76,13 +76,25 @@ async function recognize(dataUrl) {
    */
   const { data } = await worker.recognize(dataUrl, {}, { text: true, blocks: true });
 
+  /*
+   * 語には行番号を添える。折り返されたURLの連結（仕様書 §5.5）で、
+   * どの語が同じ行にあるのかが要る。矩形から組み直すこともできるが、
+   * ここで分かっているものを捨てる必要はない。
+   */
   const words = [];
+  let lineNumber = 0;
   for (const block of data.blocks ?? []) {
     for (const paragraph of block.paragraphs ?? []) {
       for (const line of paragraph.lines ?? []) {
         for (const word of line.words ?? []) {
-          words.push({ text: word.text, confidence: word.confidence, bbox: word.bbox });
+          words.push({
+            text: word.text,
+            confidence: word.confidence,
+            bbox: word.bbox,
+            line: lineNumber,
+          });
         }
+        lineNumber += 1;
       }
     }
   }

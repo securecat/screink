@@ -21,6 +21,10 @@ const languageInputs = [...document.querySelectorAll('input[name="uiLanguage"]')
 
 /** チェックボックスの設定。設定名と、操作した行に出す「保存できた」の表示。 */
 const checkboxFields = {
+  multilineUrl: {
+    input: document.querySelector('#multiline-url'),
+    status: document.querySelector('#multiline-url-status'),
+  },
   directLinkText: {
     input: document.querySelector('#direct-link-text'),
     status: document.querySelector('#direct-link-text-status'),

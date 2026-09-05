@@ -90,7 +90,7 @@
    * 枠だけ画面に貼り付いたまま残り、指したQRコードから離れてしまう。
    * 撮ったときとの差分だけ戻して、ページの内容と一緒に動いているように見せる。
    */
-  let foundBox = null;
+  let foundBoxes = [];
   let scrollAtCapture = { x: 0, y: 0 };
 
   /* ---------------------------------------------------------------- *
@@ -214,6 +214,10 @@
 
     const crossV = el('div', 'screink-crosshair screink-crosshair--v');
     const crossH = el('div', 'screink-crosshair screink-crosshair--h');
+    /*
+    * 「見つかった位置」の枠。折り返されたURLは行ごとに囲むので複数になりうる
+    * （仕様書 §5.5）。1つだけ先に作っておき、足りなければ増やす。
+    */
     const found = el('div', 'screink-found');
     found.hidden = true;
 
@@ -351,12 +355,40 @@
     ui.panel.classList.toggle('screink-panel--top', inLowerHalf);
   }
 
-  /** 見つかったQRコードの位置を画面上に示す。 */
-  function renderFoundBox(bboxCss) {
+  /** 枠を必要な数だけ用意する。 */
+  function foundNodes(count) {
+    const nodes = [...ui.root.querySelectorAll('.screink-found')];
+    while (nodes.length < count) {
+      const node = el('div', 'screink-found');
+      node.hidden = true;
+      // 十字線より先に入れて、枠が線を隠さないようにする
+      ui.root.insertBefore(node, ui.crossV);
+      nodes.push(node);
+    }
+    return nodes;
+  }
+
+  /**
+   * 見つかった位置を画面上に示す。
+   * 折り返されたURLは行ごとに囲む。1つの矩形でまとめると、行末から行頭までの
+   * 何も無いところまで囲むことになる（仕様書 §5.5）。
+   */
+  function renderFoundBox(boxes) {
     if (!ui) return;
-    placePanel(bboxCss);
-    foundBox = bboxCss ?? null;
+    const list = Array.isArray(boxes) ? boxes.filter(Boolean) : boxes ? [boxes] : [];
+    // パネルの寄せ先は、まとめた範囲で決める（行ごとに動かすものではない）
+    placePanel(list.length === 0 ? null : boundsOfBoxes(list));
+    foundBoxes = list;
     positionFoundBox();
+  }
+
+  /** 矩形の並びをまとめた外接矩形。 */
+  function boundsOfBoxes(boxes) {
+    const x = Math.min(...boxes.map((box) => box.x));
+    const y = Math.min(...boxes.map((box) => box.y));
+    const right = Math.max(...boxes.map((box) => box.x + box.width));
+    const bottom = Math.max(...boxes.map((box) => box.y + box.height));
+    return { x, y, width: right - x, height: bottom - y };
   }
 
   /**
@@ -370,26 +402,30 @@
    */
   function positionFoundBox() {
     if (!ui) return;
-    if (!foundBox) {
-      ui.found.hidden = true;
-      return;
-    }
+    const nodes = foundNodes(foundBoxes.length);
 
-    const left = foundBox.x - (window.scrollX - scrollAtCapture.x);
-    const top = foundBox.y - (window.scrollY - scrollAtCapture.y);
+    nodes.forEach((node, index) => {
+      const box = foundBoxes[index];
+      if (!box) {
+        node.hidden = true;
+        return;
+      }
 
-    ui.found.style.left = `${left}px`;
-    ui.found.style.top = `${top}px`;
-    ui.found.style.width = `${foundBox.width}px`;
-    ui.found.style.height = `${foundBox.height}px`;
+      const left = box.x - (window.scrollX - scrollAtCapture.x);
+      const top = box.y - (window.scrollY - scrollAtCapture.y);
 
-    // 画面の外へ出たら消す。端に貼り付いた枠が残らないように
-    const outside =
-      left + foundBox.width < 0 ||
-      top + foundBox.height < 0 ||
-      left > window.innerWidth ||
-      top > window.innerHeight;
-    ui.found.hidden = outside;
+      node.style.left = `${left}px`;
+      node.style.top = `${top}px`;
+      node.style.width = `${box.width}px`;
+      node.style.height = `${box.height}px`;
+
+      // 画面の外へ出たら消す。端に貼り付いた枠が残らないように
+      node.hidden =
+        left + box.width < 0 ||
+        top + box.height < 0 ||
+        left > window.innerWidth ||
+        top > window.innerHeight;
+    });
   }
 
   /* ---------------------------------------------------------------- *
@@ -493,8 +529,7 @@
   function expandAiming() {
     ui.panel.hidden = true;
     // 枠は消す。残しておくとスクロールのたびに置き直されて復活してしまう
-    foundBox = null;
-    ui.found.hidden = true;
+    renderFoundBox(null);
     ui.catcher.hidden = false;
     ui.crossV.hidden = false;
     ui.crossH.hidden = false;
@@ -630,7 +665,7 @@
     const candidates = recognition.candidates;
     const candidate = candidates[candidateIndex];
 
-    renderFoundBox(candidate.bboxCss);
+    renderFoundBox(candidate.bboxesCss ?? candidate.bboxCss);
 
     const isUrl = candidate.kind === 'url';
     // QRコードから読んだのか、文字として読んだのかを見出しで区別する
@@ -967,7 +1002,7 @@
     ui = null;
     recognition = null;
     candidateIndex = 0;
-    foundBox = null;
+    foundBoxes = [];
 
     if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
       try {

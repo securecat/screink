@@ -64,6 +64,15 @@ export const DEFAULT_SETTINGS = {
   directLink: false,
 
   /**
+   * 折り返されたURLを、次の行以降とつないで読む（仕様書 §5.5）。
+   *
+   * 既定はOFF。**次の行が本当にURLの続きなのかは、絵として見る限り断定できない。**
+   * これは「読めるようにする」機能ではなく「続きだと見なす」推測を許可する設定で、
+   * ONにした人が結果を確かめる前提で提供する。
+   */
+  multilineUrl: false,
+
+  /**
    * 文字として読んだ（OCR）URLを、確認パネルを出さずに直ちに新しいタブで開く。
    *
    * `directLink` とは独立に効く。OCR は1字違いが起きるため、QRとは別の判断として
@@ -102,6 +111,7 @@ export async function getSettings() {
     ocrRegionWidth: clampNumber('ocrRegionWidth', stored.ocrRegionWidth),
     ocrRegionHeight: clampNumber('ocrRegionHeight', stored.ocrRegionHeight),
     openCaptureInTab: Boolean(stored.openCaptureInTab),
+    multilineUrl: Boolean(stored.multilineUrl),
     directLink: Boolean(stored.directLink),
     directLinkText: Boolean(stored.directLinkText),
   };

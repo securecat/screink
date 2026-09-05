@@ -734,9 +734,20 @@ function detectQrCodes(source) {
  * OCR固有の手がかり（信頼度）は、渡されたものだけがそのまま候補に乗る。
  * `code.bbox` は切り出し画像内の物理ピクセルであること（単位を混ぜないこと）。
  */
+/**
+ * 切り出し画像内の物理ピクセル -> キャプチャ画像の物理ピクセル -> CSSピクセル。
+ * 切り出し画像には人工的な余白が足してあるので、その分を引く。
+ */
+function toCssBox(bbox, crop, dpr) {
+  return {
+    x: Math.round((bbox.x - crop.padding + crop.device.x) / dpr),
+    y: Math.round((bbox.y - crop.padding + crop.device.y) / dpr),
+    width: Math.round(bbox.width / dpr),
+    height: Math.round(bbox.height / dpr),
+  };
+}
+
 function toCandidate(code, crop, dpr, point) {
-  // 切り出し画像内の物理ピクセル -> キャプチャ画像の物理ピクセル -> CSSピクセル
-  // 切り出し画像には人工的な余白が足してあるので、その分を引く
   const cssBbox = {
     x: (code.bbox.x - crop.padding + crop.device.x) / dpr,
     y: (code.bbox.y - crop.padding + crop.device.y) / dpr,
@@ -791,7 +802,14 @@ function toCandidate(code, crop, dpr, point) {
       width: Math.round(cssBbox.width),
       height: Math.round(cssBbox.height),
     },
+    /*
+     * 行ごとの矩形（仕様書 §5.5）。折り返されたURLを1つの矩形で囲むと、
+     * 行末から行頭までの何も無いところまで囲むことになるので、行ごとに出す。
+     * 1行のものは `bboxCss` と同じ1つだけが入る。
+     */
+    bboxesCss: (code.bboxes ?? [code.bbox]).map((box) => toCssBox(box, crop, dpr)),
     bboxInCrop: code.bbox,
+    bboxesInCrop: code.bboxes ?? [code.bbox],
     containsPoint,
     near,
     distance: Math.round(distance),
@@ -831,7 +849,7 @@ function selectCandidates(candidates) {
  *          regions: Array<{x:number,y:number,width:number,height:number}>,
  *          ocrRegion?: {x:number,y:number,width:number,height:number}}} request
  */
-async function recognize(tab, request) {
+async function recognize(tab, request, settings) {
   const startedAt = performance.now();
 
   const shotDataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
@@ -921,13 +939,20 @@ async function recognize(tab, request) {
   if (band !== null) {
     try {
       const read = await runOcr(await canvasToDataUrl(band.canvas));
-      const candidates = findUrlsInWords(read.words).map((entry) =>
+      /*
+       * 折り返されたURLの連結は、設定がONのときだけ行う（仕様書 §5.5）。
+       * OFF のときは今までどおり、行ごとに別の文字列として扱う。
+       */
+      const candidates = findUrlsInWords(read.words, {
+        multiline: settings.multilineUrl,
+      }).map((entry) =>
         toCandidate(
           {
             text: entry.text,
             engine: 'tesseract',
             confidence: entry.confidence,
             bbox: bboxInCropFromOcr(entry.bbox, band),
+            bboxes: entry.bboxes.map((box) => bboxInCropFromOcr(box, band)),
           },
           band.crop,
           dpr,
@@ -1182,8 +1207,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
       try {
-        const result = await recognize(tab, message);
+        // 設定は先に読む。読み取りの途中（折り返しの連結）でも要る
         const settings = await getSettings();
+        const result = await recognize(tab, message, settings);
         if (settings.openCaptureInTab) {
           await chrome.tabs.create({ url: chrome.runtime.getURL('src/debug/capture.html') });
         }
