@@ -167,8 +167,32 @@ function renderOcrText(capture) {
   candidatesHost.append(heading, body);
 }
 
+/**
+ * 行の境目をどう判定したか（仕様書 §5.5）。
+ * 「複数行のURLを読み取る」がONのときだけ出る。
+ */
+function renderJoins(capture) {
+  const joins = Array.isArray(capture.joins) ? capture.joins : [];
+  if (joins.length === 0) return;
+
+  const heading = el('p', 'note');
+  heading.textContent = `${t('debugLabelJoins')}:`;
+  const list = el('ul', 'note');
+  for (const join of joins) {
+    const item = el('li');
+    item.textContent = t(join.join ? 'debugJoined' : 'debugNotJoined', [
+      String(join.from),
+      String(join.to),
+      join.reason,
+    ]);
+    list.append(item);
+  }
+  candidatesHost.append(heading, list);
+}
+
 function renderCandidates(capture) {
   renderOcrText(capture);
+  renderJoins(capture);
 
   if (capture.candidates.length === 0) {
     const message = el('p', 'note');

@@ -279,19 +279,21 @@ export function planLineJoins(lines, styles = []) {
   const blockLeft = Math.min(...lines.map((line) => line.x0));
   const blockRight = Math.max(...lines.map((line) => line.x1));
 
-  let stopped = false;
+  /*
+   * 行の境目は1つずつ、独立に見る。
+   *
+   * 切り出しには、指した行とは関係のない行も入る（別の段落、別のURL、隣の
+   * テキストボックス）。**どこか1つの境目でつながらなかったからといって、
+   * その先の行を見なくてよいわけではない。** 以前ここで打ち切っていて、
+   * 実物のスライドで p-portal のURLが連結できなかった（2026-09-05）。
+   *
+   * URLが途中で止まるのは、この判定の結果として自然にそうなる。
+   * 連結は境目が続けて成立している間だけ効くため。
+   */
   for (let index = 0; index < lines.length - 1; index += 1) {
     const line = lines[index];
     const next = lines[index + 1];
-    const decide = (join, reason) => {
-      if (!join) stopped = true;
-      decisions.push({ join, reason });
-    };
-
-    if (stopped) {
-      decisions.push({ join: false, reason: 'すでに確定している' });
-      continue;
-    }
+    const decide = (join, reason) => decisions.push({ join, reason });
 
     const height = Math.max(line.height, 1);
 

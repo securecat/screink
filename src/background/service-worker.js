@@ -25,7 +25,7 @@ import { MESSAGES as DICTIONARIES } from '../shared/messages.js';
 import { readQrPayload } from '../shared/qr-text.js';
 import { getSettings } from '../shared/settings.js';
 import { toSafeUrl } from '../shared/url.js';
-import { findUrlsInWords } from '../shared/url-text.js';
+import { findUrlsInWords, groupWordsIntoLines, planLineJoins } from '../shared/url-text.js';
 import jsQR from '../vendor/jsqr/index.js';
 
 const MESSAGES = {
@@ -964,6 +964,17 @@ async function recognize(tab, request, settings) {
         cropMode: band.mode,
         engine: 'tesseract',
         candidates,
+        /*
+         * 行の境目をどう判定したか（仕様書 §5.5）。確認画面に出すためだけのもので、
+         * 判定そのものは findUrlsInWords の中で行われている。
+         */
+        joins: settings.multilineUrl
+          ? planLineJoins(groupWordsIntoLines(read.words)).map((decision, index) => ({
+              from: index + 1,
+              to: index + 2,
+              ...decision,
+            }))
+          : [],
         selected: selectCandidates(candidates),
         // 目視確認用。読んだ文字を見せないと、URLが出ない理由が分からない
         text: read.text,
@@ -1010,6 +1021,7 @@ async function recognize(tab, request, settings) {
     imageScale: result.imageScale ?? 1,
     cropMode: result.cropMode,
     ocrText: result.text ?? '',
+    joins: result.joins ?? [],
     viewportImage: shot,
     dpr,
     clamped: result.crop.clamped,
