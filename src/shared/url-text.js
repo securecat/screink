@@ -165,8 +165,6 @@ const NEW_URL_HEAD = /^(https?:\/\/|www\.)/i;
 
 /** 位置合わせの許容誤差を、行の高さの何倍にするか。 */
 const ALIGN_TOLERANCE = 0.6;
-/** スタイルが一致しているときは、位置合わせを少し緩める。 */
-const ALIGN_TOLERANCE_STYLED = 1.0;
 /** 行の右端が「ブロックの右端まで届いている」と見なす差（行の高さの何倍か）。 */
 const RIGHT_EDGE_TOLERANCE = 1.0;
 /** 隣り合う行と見なす行間（行の高さの何倍まで）。 */
@@ -237,29 +235,25 @@ export function groupWordsIntoLines(words) {
     .sort((a, b) => a.y0 - b.y0);
 }
 
-/** 2つのスタイルが食い違っているか。どちらかが分からなければ食い違いとは言わない。 */
-function styleConflicts(a, b) {
+/**
+ * 2つの行が、同じ見た目で続いていると言えるか。
+ *
+ * **これが連結の根拠である（仕様書 §5.5）。** 折り返しなのか次の文が始まった
+ * だけなのかは、絵から断定できない。断定できるのは**表示している側がその2行を
+ * 同じものとして扱っているか**で、それは色と下線に出る。こちらの推測ではなく、
+ * 表示側がすでに下している判断に乗る。
+ *
+ * 測れなかったとき（文字の色を取れる画素が無いなど）は「続いている」とは言わない。
+ */
+function styleContinues(a, b) {
   if (!a || !b) return false;
-  if (typeof a.underline === 'boolean' && typeof b.underline === 'boolean') {
-    if (a.underline !== b.underline) return true;
-  }
-  if (Array.isArray(a.color) && Array.isArray(b.color)) {
-    const difference = a.color.reduce(
-      (sum, value, index) => sum + Math.abs(value - (b.color[index] ?? 0)),
-      0,
-    );
-    if (difference > COLOR_TOLERANCE) return true;
-  }
-  return false;
-}
-
-/** 2つのスタイルが揃っていると言えるか（許容誤差を緩める根拠に使う）。 */
-function styleMatches(a, b) {
-  if (!a || !b) return false;
-  if (a.underline !== true || b.underline !== true) {
-    if (!Array.isArray(a.color) || !Array.isArray(b.color)) return false;
-  }
-  return !styleConflicts(a, b);
+  if (a.underline !== b.underline) return false;
+  if (!Array.isArray(a.color) || !Array.isArray(b.color)) return false;
+  const difference = a.color.reduce(
+    (sum, value, index) => sum + Math.abs(value - (b.color[index] ?? 0)),
+    0,
+  );
+  return difference <= COLOR_TOLERANCE;
 }
 
 /**
@@ -331,14 +325,26 @@ export function planLineJoins(lines, styles = []) {
       continue;
     }
 
-    // 4. 次の行の先頭の位置が、ブロックの左端か、URLの開始位置に一致する
+    /*
+     * 4. 見た目が続いていること。**これが連結の根拠。**
+     *
+     * 幾何（右端まで届いたか、行送りされうる文字で切れたか）は条件にしない。
+     * 切り出しの幅は指した行の広がりで決めているので、**行の右端そのものが
+     * 測れていない**（その行がいちばん長ければ、常に「右端まで届いた」になる）。
+     * 測れない量を根拠にはできないため、記録だけして判定には使わない。
+     */
+    const style = styles[line.index];
+    const nextStyle = styles[next.index];
+    if (!styleContinues(style, nextStyle)) {
+      decide(false, '見た目が続いていない');
+      continue;
+    }
+
+    // 5. 次の行の先頭の位置が、ブロックの左端か、URLの開始位置に一致する
     const urlStart = line.words.find((word) =>
       NEW_URL_HEAD.test(normalizeOcrText(word.text)),
     );
-    const style = styles[line.index];
-    const nextStyle = styles[next.index];
-    const tolerance =
-      height * (styleMatches(style, nextStyle) ? ALIGN_TOLERANCE_STYLED : ALIGN_TOLERANCE);
+    const tolerance = height * ALIGN_TOLERANCE;
     const alignedLeft = Math.abs(next.x0 - blockLeft) <= tolerance;
     const alignedUnderUrl =
       urlStart !== undefined && Math.abs(next.x0 - urlStart.bbox.x0) <= tolerance;
@@ -347,13 +353,7 @@ export function planLineJoins(lines, styles = []) {
       continue;
     }
 
-    /*
-     * 行送りの理由（右端まで届いた／行送りされうる文字で切れた）と、見た目の一致は
-     * **条件にしない。記録するだけ。** 手で改行されたURLは、短い行の途中で切れ、
-     * 前後で色も下線も変わる。実物（`work/for-screink-url-check-pptx(pdf).pdf` の
-     * `https://www.digit` / `al.go.jp/`）がそうなっており、それを弾いてはいけない。
-     * 仕様書 §5.5 を参照。
-     */
+    // 行送りの理由は、確認画面に出すためだけに求める（判定には使わない）
     const remaining = blockRight - line.x1;
     const overflowed = remaining <= height * RIGHT_EDGE_TOLERANCE;
     const tail = normalizeOcrText(line.words[line.words.length - 1]?.text).replace(/\s+/g, '');
@@ -363,12 +363,10 @@ export function planLineJoins(lines, styles = []) {
     decide(
       true,
       overflowed
-        ? '行の右端で折り返している'
+        ? '見た目が続いている（行の右端で折り返している）'
         : brokeAtTail
-          ? '行送りされうる文字で切れている'
-          : styleConflicts(style, nextStyle)
-            ? '手で改行された（見た目は変わっている）'
-            : '手で改行された',
+          ? '見た目が続いている（行送りされうる文字で切れている）'
+          : '見た目が続いている',
     );
   }
 

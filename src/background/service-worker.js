@@ -342,6 +342,109 @@ function preprocessForOcr(source, dpr) {
 }
 
 /* ------------------------------------------------------------------ *
+ * 行の見た目（色・下線）を測る
+ * ------------------------------------------------------------------ */
+
+/** 下線を探すために、行の矩形を下へどれだけ伸ばすか（行の高さの割合）。 */
+const STYLE_UNDERLINE_REACH = 0.35;
+/** 横に連なる文字がこの割合を超えたら、下線が引かれていると見なす。 */
+const STYLE_UNDERLINE_RATIO = 0.6;
+
+/**
+ * 行ごとの見た目を測る（仕様書 §5.5）。
+ *
+ * 折り返されたURLを続きと見なしてよいかは、**表示している側がその2行を
+ * 同じものとして扱っているか**で決める。色が変わっていたり、下線が片方だけ
+ * だったりするなら、それは別のものである。
+ *
+ * @param {OffscreenCanvas} canvas 切り出し画像（前処理前・色が残っているもの）
+ * @param {Array<{index:number, x0:number, y0:number, x1:number, y1:number}>} lines
+ *        OCR にかけた画像の座標系
+ * @param {number} scale 切り出し画像 -> OCR画像 の倍率
+ * @returns {Array<{color: number[]|null, underline: boolean|null}>} 行番号で引ける
+ */
+function measureLineStyles(canvas, lines, scale) {
+  const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
+  const styles = [];
+
+  for (const line of lines) {
+    const x = Math.max(Math.floor(line.x0 / scale), 0);
+    const y = Math.max(Math.floor(line.y0 / scale), 0);
+    const height = Math.max(Math.round((line.y1 - line.y0) / scale), 1);
+    const width = Math.min(
+      Math.max(Math.round((line.x1 - line.x0) / scale), 1),
+      canvas.width - x,
+    );
+    // 下線は文字の下にあるので、少し下まで見る
+    const reach = Math.min(
+      height + Math.round(height * STYLE_UNDERLINE_REACH),
+      canvas.height - y,
+    );
+    if (width < 1 || reach < 1) {
+      styles[line.index] = { color: null, underline: null };
+      continue;
+    }
+
+    const { data } = ctx.getImageData(x, y, width, reach);
+    const luma = new Uint8Array(width * reach);
+    const histogram = new Uint32Array(32);
+    for (let i = 0, p = 0; p < luma.length; i += 4, p += 1) {
+      const value = Math.round((data[i] * 3 + data[i + 1] * 6 + data[i + 2]) / 10);
+      luma[p] = value;
+      histogram[value >> 3] += 1;
+    }
+    let bucket = 0;
+    for (let index = 1; index < histogram.length; index += 1) {
+      if (histogram[index] > histogram[bucket]) bucket = index;
+    }
+    const background = bucket * 8 + 4;
+
+    // 文字の色は、背景から離れた画素の平均
+    let count = 0;
+    let red = 0;
+    let green = 0;
+    let blue = 0;
+    for (let p = 0; p < luma.length; p += 1) {
+      if (Math.abs(luma[p] - background) <= TEXT_INK_DELTA) continue;
+      count += 1;
+      red += data[p * 4];
+      green += data[p * 4 + 1];
+      blue += data[p * 4 + 2];
+    }
+    const color =
+      count > 0
+        ? [Math.round(red / count), Math.round(green / count), Math.round(blue / count)]
+        : null;
+
+    /*
+     * 下線は、文字の下の方に現れる「横に長く連なった画素」。
+     * 文字そのものと混ざらないよう、行の下半分から下だけを見る。
+     */
+    let underline = false;
+    for (let row = Math.round(height * 0.7); row < reach; row += 1) {
+      let run = 0;
+      let longest = 0;
+      for (let column = 0; column < width; column += 1) {
+        if (Math.abs(luma[row * width + column] - background) > TEXT_INK_DELTA) {
+          run += 1;
+          if (run > longest) longest = run;
+        } else {
+          run = 0;
+        }
+      }
+      if (longest >= width * STYLE_UNDERLINE_RATIO) {
+        underline = true;
+        break;
+      }
+    }
+
+    styles[line.index] = { color, underline };
+  }
+
+  return styles;
+}
+
+/* ------------------------------------------------------------------ *
  * 指した行が横にどこまで続いているかを調べる
  * ------------------------------------------------------------------ */
 
@@ -849,10 +952,29 @@ function selectCandidates(candidates) {
  *          regions: Array<{x:number,y:number,width:number,height:number}>,
  *          ocrRegion?: {x:number,y:number,width:number,height:number}}} request
  */
+/**
+ * 画面を1枚撮る。
+ *
+ * `captureVisibleTab` には毎秒の呼び出し回数の上限があり、続けて指すと
+ * 「画面を取得できませんでした」で失敗する。**待てば通るものなので、
+ * 1回だけ間を空けて撮り直す。** それでも駄目なら、そのまま失敗として返す。
+ */
+const CAPTURE_RETRY_WAIT = 700;
+
+async function captureTab(tab) {
+  try {
+    return await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+  } catch (error) {
+    if (!/quota/i.test(String(error))) throw error;
+    await new Promise((resolve) => setTimeout(resolve, CAPTURE_RETRY_WAIT));
+    return chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+  }
+}
+
 async function recognize(tab, request, settings) {
   const startedAt = performance.now();
 
-  const shotDataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+  const shotDataUrl = await captureTab(tab);
   const bitmap = await createImageBitmap(dataUrlToBlob(shotDataUrl));
   // close() したあとは width / height が 0 になるので先に取っておく
   const shot = { width: bitmap.width, height: bitmap.height };
@@ -943,8 +1065,19 @@ async function recognize(tab, request, settings) {
        * 折り返されたURLの連結は、設定がONのときだけ行う（仕様書 §5.5）。
        * OFF のときは今までどおり、行ごとに別の文字列として扱う。
        */
+      /*
+       * 折り返しの連結は、**行の見た目が続いているか**で決める（仕様書 §5.5）。
+       * 表示している側がその2行を同じものとして扱っているかどうかが根拠なので、
+       * 色と下線を切り出し画像から測って渡す。
+       */
+      const lines = settings.multilineUrl ? groupWordsIntoLines(read.words) : [];
+      const lineStyles = settings.multilineUrl
+        ? measureLineStyles(band.crop.canvas, lines, band.scale)
+        : [];
+
       const candidates = findUrlsInWords(read.words, {
         multiline: settings.multilineUrl,
+        lineStyles,
       }).map((entry) =>
         toCandidate(
           {
@@ -969,7 +1102,7 @@ async function recognize(tab, request, settings) {
          * 判定そのものは findUrlsInWords の中で行われている。
          */
         joins: settings.multilineUrl
-          ? planLineJoins(groupWordsIntoLines(read.words)).map((decision, index) => ({
+          ? planLineJoins(lines, lineStyles).map((decision, index) => ({
               from: index + 1,
               to: index + 2,
               ...decision,
