@@ -392,6 +392,29 @@ export function planLineJoins(lines, styles = []) {
  *                  confidence: number | null}>}
  */
 export function findUrlsInWords(words, options = {}) {
+  const plain = extractUrls(words, {});
+  if (!options.multiline) return plain;
+
+  /*
+   * **連結は候補を「足す」だけにする。置き換えない（仕様書 §5.5）。**
+   *
+   * 連結した文字列だけを返していたとき、連結を誤ると、設定がOFFなら
+   * 見つかっていたURLごと消えていた。実際に実物のスライドで
+   * 「ONにすると認識すらしなくなる」という形で出た（2026-09-05）。
+   *
+   * 連結して得たものを先に、連結しないまま得たものを後に置く。
+   * 同じURLは1つにまとめる。**ONがOFFより悪くなることは、これで無くなる。**
+   */
+  const joined = extractUrls(words, options);
+  const seen = new Set();
+  return [...joined, ...plain].filter((entry) => {
+    if (seen.has(entry.url)) return false;
+    seen.add(entry.url);
+    return true;
+  });
+}
+
+function extractUrls(words, options) {
   const list = Array.isArray(words) ? words : [];
 
   /*
