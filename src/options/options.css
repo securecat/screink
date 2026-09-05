@@ -27,11 +27,13 @@ h3 {
 /*
  * 節の中の、さらにひとまとまり。見出し・説明・チェックボックスが
  * 1つの話であることを枠で示す。
+ * 角の丸みと線の色は page.css の `.card` に合わせ、線だけ点線にしてある。
  */
 .framed {
   margin: 0 0 12px;
   padding: 16px 16px 4px;
-  border: 1px dotted #767676;
+  border: 1px dotted var(--divider);
+  border-radius: 10px;
 }
 
 .field {
