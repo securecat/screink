@@ -1,7 +1,8 @@
 /**
  * 読み取った画像の確認画面。
  *
- * 画像・指した位置・見つかったQRコードの位置を重ねて表示する。
+ * 画像・指した位置・見つかったもの（QRコード / 文字から取り出したURL）の位置を
+ * 重ねて表示する。
  * 画像は service worker のメモリ上にある直近の結果を受け取るだけで、保存しない。
  */
 
@@ -26,6 +27,14 @@ function el(tag, className) {
   return node;
 }
 
+/** 切り出しの方式（どうやってこの範囲を決めたか）。 */
+const CROP_MODE_KEYS = {
+  located: 'debugCropLocated',
+  ladder: 'debugCropLadder',
+  band: 'debugCropBand',
+  line: 'debugCropLine',
+};
+
 function describeGeometry(capture) {
   const pad = (label) => `${label}:`.padEnd(16);
   return [
@@ -35,7 +44,11 @@ function describeGeometry(capture) {
     `${pad(t('debugLabelShot'))}${capture.viewportImage.width}×${capture.viewportImage.height}`,
     `${pad(t('debugLabelPoint'))}(${Math.round(capture.point.x)}, ${Math.round(capture.point.y)})`,
     `${pad(t('debugLabelPadding'))}${capture.padding ?? 0} px`,
-    `${pad(t('debugLabelCropMode'))}${t(capture.locatedTarget ? 'debugCropLocated' : 'debugCropLadder')}`,
+    // OCR の前処理で拡大した場合だけ出す（QRは等倍のまま走査する）
+    (capture.imageScale ?? 1) !== 1
+      ? `${pad(t('debugLabelUpscale'))}×${capture.imageScale.toFixed(2)}`
+      : '',
+    `${pad(t('debugLabelCropMode'))}${t(CROP_MODE_KEYS[capture.cropMode] ?? 'debugCropLadder')}`,
     `${pad(t('debugLabelEngine'))}${capture.engine} / ${capture.elapsedMs} ms`,
     capture.clamped ? t('debugClamped') : '',
   ]
@@ -83,7 +96,12 @@ function renderMarkers(capture, image) {
   for (const marker of markers) stage.append(marker.node);
 
   const place = () => {
-    const k = image.clientWidth / image.naturalWidth;
+    /*
+     * マーカーの位置は切り出し画像の物理ピクセルで来る。表示している画像は
+     * OCR の前処理で拡大されていることがあるので、その倍率をかけてから
+     * 画面上の表示倍率へ落とす。
+     */
+    const k = (image.clientWidth / image.naturalWidth) * (capture.imageScale ?? 1);
     for (const marker of markers) marker.place(k);
   };
   place();
@@ -93,6 +111,9 @@ function renderMarkers(capture, image) {
 
 /** 読み取りの経路を1行で説明する（うまく読めなかったときの手がかり）。 */
 function describeDecoding(candidate) {
+  if (candidate.engine === 'tesseract') {
+    return t('debugDecodedOcr', [String(candidate.confidence ?? '—')]);
+  }
   if (candidate.source === 'jsqr') return t('debugDecodedJsqr');
   if (candidate.source) return t('debugDecodedRecovered', [candidate.source]);
   return t('debugDecodedFailed');
@@ -124,7 +145,25 @@ function describeBytes(bytes) {
   return rest > 0 ? `${shown} ${t('debugBytesMore', [String(rest)])}` : shown;
 }
 
+/**
+ * OCR が読んだ文字をそのまま出す。
+ * URLが出てこないとき、「文字を読めていない」のか「読めたがURLとして
+ * 切り出せていない」のかは、これを見ないと分けられない。
+ */
+function renderOcrText(capture) {
+  const text = typeof capture.ocrText === 'string' ? capture.ocrText.trim() : '';
+  if (text === '') return;
+
+  const heading = el('p', 'note');
+  heading.textContent = `${t('debugLabelOcrText')}:`;
+  const body = el('p', 'ocr-text mono');
+  body.textContent = text;
+  candidatesHost.append(heading, body);
+}
+
 function renderCandidates(capture) {
+  renderOcrText(capture);
+
   if (capture.candidates.length === 0) {
     const message = el('p', 'note');
     message.textContent = t('debugNoCode');
@@ -172,9 +211,13 @@ function renderCandidates(capture) {
      * 「読み取れなかった」ときはここだけが手がかりになる。
      */
     const decoding = el('p', 'note mono');
-    decoding.textContent = `${t('debugLabelDecoded')}: ${describeDecoding(candidate)} / ${t(
-      'debugLabelMode',
-    )}: ${describeModes(candidate)}`;
+    // モードとバイト列はQRコード固有の話。OCR の候補には出さない
+    decoding.textContent =
+      candidate.engine === 'tesseract'
+        ? `${t('debugLabelDecoded')}: ${describeDecoding(candidate)}`
+        : `${t('debugLabelDecoded')}: ${describeDecoding(candidate)} / ${t(
+            'debugLabelMode',
+          )}: ${describeModes(candidate)}`;
     item.append(decoding);
 
     const bytes = Array.isArray(candidate.bytes) ? candidate.bytes : [];

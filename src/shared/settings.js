@@ -33,26 +33,44 @@ export const DEFAULT_SETTINGS = {
 
   /**
    * OCR用の切り出し領域（CSSピクセル）。URLは横に長く縦に薄いため帯にする。
-   * Phase 1 で使用する。現時点では未使用のため設定画面には出していない。
+   * QRコードが見つからなかったときに、指した位置を中心にこの帯を切り出す
+   * （仕様書 §4.6）。設定画面には出していない。
+   *
+   * 幅は**指した行が横にどこまで続いているかで決め直す**ので、通常は使わない
+   * （`locateTextRun`）。行が求まらなかったときの保険として使う。
+   * 高さはそのまま使う。
    */
   ocrRegionWidth: 960,
   ocrRegionHeight: 200,
 
   /**
    * 切り出した画像を、確認を待たず新しいタブで開く（PoC の目視確認用）。
-   * 会議中にタブが切り替わるのは邪魔なので既定は off。
-   * off でも結果パネルのボタンから開ける。
+   * 会議中にタブが切り替わるのは邪魔なので既定はOFF。
+   * OFFでも結果パネルのボタンから開ける。
    */
   openCaptureInTab: false,
 
   /**
    * ダイレクトリンク：URLを読み取れたら、確認パネルを出さずに直ちに新しいタブで開く。
    *
-   * 既定は off。読み取った内容を見せてから開くのが基本の作りであり、
+   * 既定はOFF。読み取った内容を見せてから開くのが基本の作りであり、
    * それを省くのはユーザーが明示的に選んだときだけとする（仕様書 §5.4）。
-   * URLでなかった場合・見つからなかった場合は、on でもパネルを出す。
+   * URLでなかった場合・見つからなかった場合は、ONでもパネルを出す。
+   *
+   * **こちらはQRコードから読んだURLだけに効く。** QRコードは規格に誤り訂正が
+   * 内蔵されていて、デコードできた結果は正解である。置き場所はポップアップ
+   * （使うたびに変わりうる選択のため）。
    */
   directLink: false,
+
+  /**
+   * 文字として読んだ（OCR）URLを、確認パネルを出さずに直ちに新しいタブで開く。
+   *
+   * `directLink` とは独立に効く。OCR は1字違いが起きるため、QRとは別の判断として
+   * 分けてある。置き場所はオプション設定（「読み取りの精度を承知のうえで使う」という
+   * 据え置きの表明であり、使うたびに変える種類の選択ではないため。仕様書 §5.4）。
+   */
+  directLinkText: false,
 };
 
 export const SETTING_LIMITS = {
@@ -85,6 +103,7 @@ export async function getSettings() {
     ocrRegionHeight: clampNumber('ocrRegionHeight', stored.ocrRegionHeight),
     openCaptureInTab: Boolean(stored.openCaptureInTab),
     directLink: Boolean(stored.directLink),
+    directLinkText: Boolean(stored.directLinkText),
   };
 }
 

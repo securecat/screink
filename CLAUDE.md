@@ -77,11 +77,12 @@ CHROME_EXTENSION.md の規定構成に、このプロジェクト固有のもの
 ├── src/
 │   ├── background/   # service worker（照準モードの注入・画面キャプチャ・切り出し・認識）
 │   ├── content/      # 照準モードのオーバーレイUI（動的注入）
-│   ├── debug/        # 読み取った画像の確認画面
+│   ├── debug/        # 読み取った内容の確認画面
+│   ├── offscreen/    # OCR を動かす見えないページ（Web Worker のため）
 │   ├── options/
 │   ├── popup/
 │   ├── shared/       # 設定・URL検証・QRの中身の復号・表示言語と文言の辞書・拡張ページ共通CSS
-│   └── vendor/       # 同梱ライブラリ（jsQR）
+│   └── vendor/       # 同梱ライブラリ（jsQR / Tesseract.js）
 ├── promotion/        # ストア掲載用の素材
 └── work/             # gitignore 済み。仕様書・実験・テスト素材置き場
 ```
@@ -109,6 +110,23 @@ cp package/LICENSE      src/vendor/jsqr/LICENSE
 `index.js` は upstream の API が変わらなければ触らなくてよい。
 `BarcodeDetector` を使わない理由は仕様書 §4.5 にある。
 
+Tesseract.js を更新する手順：
+
+```
+npm pack tesseract.js@<version> tesseract.js-core@<version> @tesseract.js-data/eng@<version>
+```
+
+展開して、次の5つを差し替える（**取るファイルを間違えないこと**。理由は仕様書 §4.5）。
+
+| 置き場所 | 取得元 |
+| --- | --- |
+| `tesseract.min.js` | `tesseract.js` の `dist/tesseract.min.js` |
+| `worker.min.js` | `tesseract.js` の `dist/worker.min.js` |
+| `tesseract-core-simd-lstm.js` / `.wasm` | `tesseract.js-core`（**LSTM 専用のビルド**。`simd` 無しや旧エンジン入りは使わない） |
+| `tessdata/eng.traineddata.gz` | `@tesseract.js-data/eng` の **`4.0.0_best_int/`**（`4.0.0/` は旧エンジン込みで大きい） |
+
+そのうえで `src/vendor/tesseract/README.md` のバージョンと sha256 を更新する。
+
 ---
 
 ## 実装時のチェックリスト
@@ -121,10 +139,13 @@ cp package/LICENSE      src/vendor/jsqr/LICENSE
 - [ ] 会議サービス固有の DOM 構造・セレクタに依存したコードを書いていない
 - [ ] `host_permissions` を追加していない。静的 `content_scripts` を宣言していない
 - [ ] `manifest.json` に外部ホストを書いていない
-- [ ] 拡張ページの CSP の **`connect-src 'none'` を弱めていない**
-  - この制約により `fetch()` は一切使えない。data URL の復号は `atob()` + `Uint8Array` + `Blob` で行う
-    （`src/background/service-worker.js` 参照）
-  - Tesseract.js 等の導入で `wasm-unsafe-eval` の追加は許容するが、`connect-src` は緩めない
+- [ ] 拡張ページの CSP の `connect-src` を **`'self'` より広げていない**
+  - `'self'` は拡張自身（`chrome-extension://<自分のID>`）だけを許可する。外部ホストは1つも許可されない
+  - OCR の導入で `'none'` から `'self'` へ緩めた。Tesseract.js が同梱の学習データを
+    `fetch` で読むため（仕様書 §4.5）。**外部の通信先を持たないという担保は変わらない**
+  - `wasm-unsafe-eval` は OCR エンジン（wasm）のために入れてある。それ以外の緩和はしない
+  - data URL の復号は、いまも `atob()` + `Uint8Array` + `Blob` で行う（`fetch` を使わない。
+    `src/background/service-worker.js` 参照）
 - [ ] 依存ライブラリをリポジトリ内に同梱している（CDN 参照をしていない）
 - [ ] 切り出した画像・認識結果・指定位置の履歴を永続化していない
       （`chrome.storage` に入れるのは設定のみ。直近の結果は service worker のメモリ上だけ）
@@ -132,7 +153,9 @@ cp package/LICENSE      src/vendor/jsqr/LICENSE
       （`sync` は Google アカウント経由で端末外へ出るため使わない。
       README のプライバシー節「すべての処理がブラウザ内で完結します」の裏付けになっている）
 - [ ] 画面キャプチャは、ユーザーが位置を確定した1回につき1枚だけ
-- [ ] 権限を増やしていない（`activeTab` / `scripting` / `storage` の3つのみ）
+- [ ] 権限を増やしていない（`activeTab` / `scripting` / `storage` / `offscreen` の4つのみ）
+  - `offscreen` は OCR エンジンを動かす見えないページのためだけに使う（仕様書 §4.5）。
+    Web Worker は service worker の中では作れず、ページ側では CSP に縛られるため
 
 ### 座標系（仕様書 §4.3）
 
@@ -174,8 +197,9 @@ Shadow DOM は使っていない。`insertCSS` は Shadow DOM の中へ届かな
 - [ ] 座標や認識に関わる変更をしたら、デバイス倍率 1 / 1.5 / 2 で E2E スモークテストを通している
 
 ```
-node --experimental-websocket --no-warnings work/e2e/run.mjs    [倍率]  # 照準モードと座標変換
-node --experimental-websocket --no-warnings work/e2e/run-qr.mjs [倍率]  # QR認識と確認UI
+node --experimental-websocket --no-warnings work/e2e/run.mjs     [倍率]  # 照準モードと座標変換
+node --experimental-websocket --no-warnings work/e2e/run-qr.mjs  [倍率]  # QR認識と確認UI
+node --experimental-websocket --no-warnings work/e2e/run-ocr.mjs [倍率]  # OCRの合流（QR→OCRの順序）
 ```
 
 その他の計測用スクリプト：
@@ -184,6 +208,8 @@ node --experimental-websocket --no-warnings work/e2e/run-qr.mjs [倍率]  # QR�
 node --experimental-websocket --no-warnings work/e2e/check-contrast.mjs [言語]  # コントラスト比
 node --experimental-websocket --no-warnings work/e2e/qr-size-sweep.mjs  [倍率]  # 読める最小サイズ
 node --experimental-websocket --no-warnings work/e2e/probe-barcode.mjs  [headful]  # BarcodeDetector の可否
+node --experimental-websocket --no-warnings work/e2e/ocr-lab.mjs                # OCR の経路（Phase 1）
+node work/e2e/url-text-lab.mjs                                                  # 文中からのURL切り出し
 ```
 
 Chrome 151 では `--load-extension` が機能しないため、これらは CDP の

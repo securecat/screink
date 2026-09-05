@@ -121,6 +121,18 @@ figcaption {
   user-select: text;
 }
 
+/* OCR が読んだ文字。改行をそのまま見せたいので pre-wrap にする */
+.ocr-text {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}
+
 /* 16進のバイト列。長くなるので折り返し、選択してコピーできるようにする */
 .candidate__bytes {
   word-break: break-all;

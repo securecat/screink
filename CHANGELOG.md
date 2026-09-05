@@ -5,6 +5,26 @@ All notable changes to screink are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-09-05
+
+### Added
+
+- URLs written as text are read as well. Where you point, screink still looks for a QR code first; when there is none, the line under your position is read as text and any URL in it is offered the same way. A URL with no scheme in front of it is treated as https.
+- A second direct-link setting, on the options page, for URLs read from text. It works on its own, independently of the popup's setting for QR codes, and says what turning it on means: text is not always read correctly, and a misread URL may not exist at all or may lead somewhere else entirely.
+
+### Changed
+
+- The popup's checkbox is labelled "Open URLs from QR codes directly in a new tab". It only ever covered QR codes; now that text can be read too, it says which it is.
+- The buttons on the panel sit in two rows — what to do with what was read above, what to do with the reading itself below. "Point again" always starts the second row, so it no longer moves depending on how many buttons precede it.
+- "Copied" appears beside the button that was pressed rather than above the whole group.
+- The options page section is headed "See what was read" and describes the setting it holds, rather than being framed as something for when reading fails.
+
+### Fixed
+
+- Stepping through candidates no longer resizes the panel. Candidates of different lengths made it grow and shrink, moving the buttons — including the one being pressed to step through them. The tallest candidate now sets the height for all of them.
+- "Copied" stayed until the next candidate was shown. It now goes once your attention has plainly moved on: when the inspect tab opens in front, or when the page loses focus.
+- Notes were too dark to read comfortably against the dark theme.
+
 ## [1.1.1] - 2026-09-03
 
 ### Changed
@@ -146,6 +166,26 @@ screink のすべての重要な変更点をこのファイルに記載します
 形式は [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) に基づき、
 バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
 
+## [1.2.0] - 2026-09-05
+
+### 追加
+
+- 文字として書かれたURLも読み取れるようにしました。指した場所ではこれまでどおり先にQRコードを探し、見つからなかったときに、指した位置を横切る行を文字として読み取ります。その中にURLがあれば、QRコードのときと同じ形で提示します。`https://` などが省略されている場合は https として扱います。
+- オプション設定に「URL文字列を直接タブを開く」を追加しました。ポップアップのQRコード用の設定とは独立に効きます。ONにすることの意味も添えてあります。文字の読み取りは必ずしも正しいとは限らず、読み違えたURLは存在しないURLになったり、まったく別のページを指したりすることがあります。
+
+### 変更
+
+- ポップアップのチェックボックスのラベルを「QRのURLは直接タブを開く」にしました。もともとQRコードだけが対象でしたが、文字も読み取るようになったので、どちらのことかを言うようにしました。
+- 確認パネルのボタンを2行に分けました。1行目が読み取ったものへの操作、2行目が読み取りそのものへの操作です。「もう一度指す」は常に2行目の先頭に来るので、前にいくつボタンがあるかで位置が変わることがなくなりました。
+- 「コピーしました」を、押したボタンの隣に出すようにしました。以前はボタン全体の上に出ていました。
+- オプション設定の節の見出しを「読み取った内容を確認する」にし、その設定が何をONにするのかを書きました。「読み取れないとき」のためのもの、という枠組みをやめています。
+
+### 修正
+
+- 候補を切り替えてもパネルの大きさが変わらないようにしました。長さの違う候補があると伸び縮みし、ボタンが動いていました——切り替えのために押している、そのボタンごとです。いちばん高い候補に合わせて高さを揃えます。
+- 「コピーしました」が次の候補を出すまで残り続けていました。注視が別へ移ったことが明白なタイミング——確認画面のタブが前に出たとき、ページから注視が外れたとき——で消えるようにしました。
+- ダークテーマで、注釈の文字が背景に対して暗すぎて読みにくくなっていました。
+
 ## [1.1.1] - 2026-09-03
 
 ### 変更
@@ -158,7 +198,7 @@ screink のすべての重要な変更点をこのファイルに記載します
 
 ### 追加
 
-- ポップアップに「ダイレクトリンクを使用する」を追加しました。オンにすると、URLを読み取った時点で確認のパネルを出さず、すぐ新しいタブで開きます。既定はオフです。開けるURLの範囲は変わりません。http / https 以外は相変わらず開きませんし、URLでないものは今までどおりパネルに出ます。
+- ポップアップに「ダイレクトリンクを使用する」を追加しました。ONにすると、URLを読み取った時点で確認のパネルを出さず、すぐ新しいタブで開きます。既定はOFFです。開けるURLの範囲は変わりません。http / https 以外は相変わらず開きませんし、URLでないものは今までどおりパネルに出ます。
 - 読み取った内容を確認する画面に、それをどう読んだかを出すようにしました。どの符号化で文字になったのか、QRコードのモードとバージョン、そしてバイト列そのものを16進で表示します。どうしても文字にできなかったコードも、見つからなかった扱いで捨てずにここへ並べます。
 
 ### 変更
@@ -209,13 +249,13 @@ screink のすべての重要な変更点をこのファイルに記載します
 - 照準モードの表示を十字だけにしました。四角い枠は「この中にコードが入っていないといけない」という意味でしたが、0.2.2 で切り出しが「指した点」ではなく「指したコード」に従うようになった時点で、実態と合わなくなっていました。枠の外にあるコードも読めますし、枠の中にあっても指していなければ読みません。
 - 読み取った内容を出すパネルが、コードのある側とは反対の半分に出るようになりました。読み取ったものをパネル自身が隠すことがなくなります。
 - インストール時にショートカットキーを確保しないようにしました。オプション設定から自分で割り当てるまで、何も割り当てられず、キーの組み合わせも押さえません。Chrome がいったん割り当てたショートカットを拡張の側から外す手段は無く、外せるのはユーザーだけです。ときどき使う道具が、使う使わないに関わらずキーを握り続けるのは筋が通らないと考えました。
-- 設定を Google アカウント経由で同期せず、端末内に保存するようにしました。オン・オフの設定ひとつのために「ブラウザの外に出ない」という説明に但し書きを付けるのは割に合わないためです。
+- 設定を Google アカウント経由で同期せず、端末内に保存するようにしました。ON・OFFの設定ひとつのために「ブラウザの外に出ない」という説明に但し書きを付けるのは割に合わないためです。
 - ポップアップの冒頭の説明文を削除しました。オプション設定からは、いまや保険の処理にしか効かない「探す範囲」の設定と、チェックボックス1つを戻すだけだった「既定値に戻す」ボタンを削除しました。
 
 ### 修正
 
 - 画面上部のバーに出る照準モードの名前が、ほぼ黒の背景に黒文字で描かれていて、バーが黒い帯にしか見えていませんでした。
-- オプション設定で、操作するとページの内容が動いていました。設定をオンにすると下に一行表示され、その下のボタンが押し下げられます。そのボタンへ移ろうとすると表示が消えてボタンが元の位置に戻るため、押そうとした瞬間にずれて押せませんでした。
+- オプション設定で、操作するとページの内容が動いていました。設定をONにすると下に一行表示され、その下のボタンが押し下げられます。そのボタンへ移ろうとすると表示が消えてボタンが元の位置に戻るため、押そうとした瞬間にずれて押せませんでした。
 - ショートカットキーの表示が、実際に有効な割り当てではなく、拡張が希望したキーになっていました。希望したキーは、他と重なっていれば Chrome に断られますし、ユーザーが変更することもあるため、表示が実態と違うことがありました。
 
 ## [0.2.2] - 2026-08-30

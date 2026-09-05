@@ -35,11 +35,28 @@
         </div>
       </fieldset>
 
-      <h2 data-i18n="optionsDiagnosticsLegend">When something will not read</h2>
+      <h2 data-i18n="optionsTextUrlHeading">Reading URLs written as text</h2>
+
+      <p class="note" data-i18n="optionsTextUrlNote">
+        A URL written as text is not always read correctly: how large it is on screen and what it
+        says both matter. What comes back can be a URL that does not exist, or one that leads
+        somewhere else entirely.
+      </p>
+
+      <div class="field field--check">
+        <input type="checkbox" id="direct-link-text" name="directLinkText" />
+        <label for="direct-link-text" data-i18n="optionsTextUrlLabel">
+          Open URLs read from text directly in a new tab
+        </label>
+        <span class="save-status" id="direct-link-text-status" role="status"></span>
+      </div>
+
+      <h2 data-i18n="optionsInspectHeading">See what was read</h2>
 
       <p class="note" data-i18n="optionsAutoOpenNote">
-        You can open it any time from the panel that appears after reading, so leaving this off
-        loses nothing. Keep it off if you would rather not have tabs switch during a meeting.
+        With this ON, what the “See what was read” button shows — the button on the screink panel
+        that appears whenever a tab is not opened directly — comes up every time. Keep it OFF if
+        you would rather not have tabs switch during a meeting.
       </p>
 
       <!--

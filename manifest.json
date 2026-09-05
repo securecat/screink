@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
   "icons": {
@@ -31,7 +31,8 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "offscreen"
   ],
   "commands": {
     "start-aim-mode": {
@@ -39,6 +40,6 @@
     }
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'; img-src 'self' data:; style-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self'; img-src 'self' data:; style-src 'self'"
   }
 }

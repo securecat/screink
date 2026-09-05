@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  OCR を動かすための、画面に出ないページ（offscreen document）。
+
+  Tesseract.js は Web Worker を作るが、service worker の中では Worker を作れない。
+  content script でやるとページ側の CSP に縛られる（仕様書 §4.4）。
+  そのため、拡張自身の見えないページをここに置いて、その中で動かす。
+
+  service worker が必要になった時点で作り、使い終わったら畳む
+  （src/background/service-worker.js の `runOcr` を参照）。
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>screink OCR</title>
+  </head>
+  <body>
+    <!-- UMD 版。読み込むと window.Tesseract ができる -->
+    <script src="../vendor/tesseract/tesseract.min.js"></script>
+    <script type="module" src="ocr.js"></script>
+  </body>
+</html>
