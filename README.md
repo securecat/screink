@@ -8,7 +8,7 @@ You have probably seen how this ends. "Please fill in the survey here" appears a
 
 screink removes that detour. Point at where the URL or QR code is, and screink reads it and opens it in a new tab.
 
-> The current version reads QR codes only.
+> A URL written as text is read by OCR, so it is not always read correctly. Check what was read before opening it.
 
 screink does not depend on the internals of any particular meeting service. The only things it works from are the pixels visible on screen and the position you pointed at. That is what lets one implementation work in Microsoft Teams, in Google Meet, in Zoom, and on any other web page.
 
@@ -31,12 +31,13 @@ https://chromewebstore.google.com/detail/screink/jlcokpeegaghadhdfjaoeaoibfgbemb
 
 1. Open the page where the screen is being shared
 2. Click the screink toolbar icon to enter aim mode (you can assign a keyboard shortcut for this from the options page)
-3. Point at the QR code
+3. Point at the QR code, or at the URL itself
    - Click it, or
    - Move the crosshair with the arrow keys and press `Enter`
 4. Check the URL screink found, and open it
-   - With **Open URLs directly in a new tab** ticked, it opens without asking
-   - If the QR code carries text rather than a URL, the panel appears even with that ticked
+   - With **Open URLs from QR codes directly in a new tab** ticked in the popup, a URL from a QR code opens without asking
+   - **Open URLs read from text directly in a new tab**, on the options page, does the same for URLs read from text. The two work independently
+   - If what was read is text rather than a URL, the panel appears whatever those are set to
 5. Press `Esc` at any time to leave aim mode
 
 Ordinary clicks are never taken away. screink receives the click only while aim mode is on, so it cannot interfere with the meeting UI underneath.
@@ -52,15 +53,29 @@ Ordinary clicks are never taken away. screink receives the click only while aim 
 
 QR codes are decoded by [jsQR](https://github.com/cozmo/jsQR) (Apache License 2.0). Chrome's built-in BarcodeDetector is not available on Windows. To avoid reading behaving differently between environments, jsQR is used everywhere.
 
+Text is read by [Tesseract.js](https://github.com/naptha/tesseract.js) (Apache License 2.0) and the Tesseract OCR engine compiled to WebAssembly, with the English model bundled alongside. Everything it runs is carried inside the extension; nothing is fetched at runtime. See [src/vendor/tesseract/README.md](src/vendor/tesseract/README.md) for versions and licenses.
+
 ## Changelog
 
-### [1.1.1] - 2026-09-03
+### [1.2.0] - 2026-09-05
+
+#### Added
+
+- URLs written as text are read as well. Where you point, screink still looks for a QR code first; when there is none, the line under your position is read as text and any URL in it is offered the same way. A URL with no scheme in front of it is treated as https.
+- A second direct-link setting, on the options page, for URLs read from text. It works on its own, independently of the popup's setting for QR codes, and says what turning it on means: text is not always read correctly, and a misread URL may not exist at all or may lead somewhere else entirely.
 
 #### Changed
 
-- The checkbox in the popup is labelled "Open URLs directly in a new tab". It was named after the feature — "Use direct links" — which says nothing about what happens.
-- The line under it explaining that is gone. The label carries it now, and this is a setting seen every time the popup opens rather than a procedure met once a month.
-- The popup leads with its button. The checkbox sits below it.
+- The popup's checkbox is labelled "Open URLs from QR codes directly in a new tab". It only ever covered QR codes; now that text can be read too, it says which it is.
+- The buttons on the panel sit in two rows — what to do with what was read above, what to do with the reading itself below. "Point again" always starts the second row, so it no longer moves depending on how many buttons precede it.
+- "Copied" appears beside the button that was pressed rather than above the whole group.
+- The options page section is headed "See what was read" and describes the setting it holds, rather than being framed as something for when reading fails.
+
+#### Fixed
+
+- Stepping through candidates no longer resizes the panel. Candidates of different lengths made it grow and shrink, moving the buttons — including the one being pressed to step through them. The tallest candidate now sets the height for all of them.
+- "Copied" stayed until the next candidate was shown. It now goes once your attention has plainly moved on: when the inspect tab opens in front, or when the page loses focus.
+- Notes were too dark to read comfortably against the dark theme.
 
 For the full history, see [CHANGELOG.md](CHANGELOG.md).
 
@@ -76,7 +91,7 @@ TeamsやGoogle Meet、Zoomなどをブラウザで使っているとき、参加
 
 スクリーンクは、この回り道をなくします。URLやQRコードが写っている場所を指すだけで、スクリーンクがそれを読み取り、新しいタブで開きます。
 
-> 現バージョンではQRコードにのみ対応しています。
+> 文字として書かれたURLはOCRで読み取るため、必ずしも正しく読み取れるとは限りません。開く前に読み取った内容をご確認ください。
 
 スクリーンクは、特定の会議サービスの内部構造に依存しません。手がかりにするのは「画面に見えているピクセル」と「あなたが指した位置」だけです。そのおかげで、ひとつの実装でMicrosoft TeamsでもGoogle MeetでもZoomでも、その他のどんなWebページでも動くのです。
 
@@ -99,12 +114,13 @@ https://chromewebstore.google.com/detail/screink/jlcokpeegaghadhdfjaoeaoibfgbemb
 
 1. 画面共有が表示されているページを開く
 2. スクリーンクのツールバーアイコンをクリックして照準モードに入る（ショートカットキーはオプション設定から割り当てられます）
-3. QRコードが写っている場所を指す
+3. QRコードやURLが写っている場所を指す
    - クリックする、または
    - 矢印キーで照準を動かして `Enter` を押す
 4. スクリーンクが見つけたURLを確認して開く
-   - **URLは直接タブを開く** をONにしている時は、確認を挟まず新しいタブで開きます
-   - QRコードの内容がテキストデータの場合は、ONでも確認パネルを表示します
+   - ポップアップの **QRのURLは直接タブを開く** をONにしている時は、QRコードから読み取ったURLを、確認を挟まず新しいタブで開きます
+   - オプション設定の **URL文字列を直接タブを開く** は、文字から読み取ったURLに対して同じことをします。2つは独立に効きます
+   - 読み取った内容がURLでない場合は、どちらの設定でも確認パネルを表示します
 5. `Esc` を押せばいつでも照準モードを解除できます
 
 通常のクリックを奪うことはありません。スクリーンクがクリックを受け取るのは照準モード中だけなので、その下にある会議UIの操作を妨げません。
@@ -120,14 +136,28 @@ https://chromewebstore.google.com/detail/screink/jlcokpeegaghadhdfjaoeaoibfgbemb
 
 QRコードのデコードには[jsQR](https://github.com/cozmo/jsQR)（Apache License 2.0）を使用しています。Chrome標準の BarcodeDetector は Windows で利用できず、環境によって読み取りの挙動が変わるのを避けるため、すべての環境でjsQRを使います。
 
+文字の読み取りには[Tesseract.js](https://github.com/naptha/tesseract.js)（Apache License 2.0）と、WebAssembly に移植された Tesseract OCR エンジンを使用しています。英語のモデルも同梱しており、実行時に外部から取得するものはありません。バージョンとライセンスは [src/vendor/tesseract/README.md](src/vendor/tesseract/README.md) にあります。
+
 ## 更新履歴
 
-### [1.1.1] - 2026-09-03
+### [1.2.0] - 2026-09-05
+
+#### 追加
+
+- 文字として書かれたURLも読み取れるようにしました。指した場所ではこれまでどおり先にQRコードを探し、見つからなかったときに、指した位置を横切る行を文字として読み取ります。その中にURLがあれば、QRコードのときと同じ形で提示します。`https://` などが省略されている場合は https として扱います。
+- オプション設定に「URL文字列を直接タブを開く」を追加しました。ポップアップのQRコード用の設定とは独立に効きます。ONにすることの意味も添えてあります。文字の読み取りは必ずしも正しいとは限らず、読み違えたURLは存在しないURLになったり、まったく別のページを指したりすることがあります。
 
 #### 変更
 
-- ポップアップのチェックボックスのラベルを「URLは直接タブを開く」にしました。「ダイレクトリンクを使用する」は機能の名前でしかなく、何が起きるかを言っていませんでした。
-- その下に添えていた説明文を削除しました。ラベルが説明を兼ねますし、ポップアップを開くたびに目に入るものに、毎回の操作説明は要りません。
-- ポップアップの並びを、開始ボタンが先、チェックボックスが後になるようにしました。
+- ポップアップのチェックボックスのラベルを「QRのURLは直接タブを開く」にしました。もともとQRコードだけが対象でしたが、文字も読み取るようになったので、どちらのことかを言うようにしました。
+- 確認パネルのボタンを2行に分けました。1行目が読み取ったものへの操作、2行目が読み取りそのものへの操作です。「もう一度指す」は常に2行目の先頭に来るので、前にいくつボタンがあるかで位置が変わることがなくなりました。
+- 「コピーしました」を、押したボタンの隣に出すようにしました。以前はボタン全体の上に出ていました。
+- オプション設定の節の見出しを「読み取った内容を確認する」にし、その設定が何をONにするのかを書きました。「読み取れないとき」のためのもの、という枠組みをやめています。
+
+#### 修正
+
+- 候補を切り替えてもパネルの大きさが変わらないようにしました。長さの違う候補があると伸び縮みし、ボタンが動いていました——切り替えのために押している、そのボタンごとです。いちばん高い候補に合わせて高さを揃えます。
+- 「コピーしました」が次の候補を出すまで残り続けていました。注視が別へ移ったことが明白なタイミング——確認画面のタブが前に出たとき、ページから注視が外れたとき——で消えるようにしました。
+- ダークテーマで、注釈の文字が背景に対して暗すぎて読みにくくなっていました。
 
 全履歴は [CHANGELOG.md](CHANGELOG.md) を参照してください。
