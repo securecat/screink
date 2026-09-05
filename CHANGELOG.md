@@ -5,6 +5,13 @@ All notable changes to screink are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-09-06
+
+### Fixed
+
+- Reading no longer fails when two readings come close together. Chrome allows only so many captures a second, and going over ended the reading with a message about checking the tab is visible — which had nothing to do with the cause. It waits a moment and takes the picture again.
+- The options page label for the text-URL direct-link setting now says it opens the recognized URL, not the raw text.
+
 ## [1.2.0] - 2026-09-05
 
 ### Added
@@ -165,6 +172,13 @@ screink のすべての重要な変更点をこのファイルに記載します
 
 形式は [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) に基づき、
 バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
+
+## [1.2.1] - 2026-09-06
+
+### 修正
+
+- 続けて読み取ったときに失敗しなくなりました。Chrome は画面を取得できる回数を毎秒で制限していて、それを超えると読み取りごと失敗していました。しかも出るのは「タブが表示されているか確認してください」という、原因と関係のない案内でした。少し待って撮り直すようにしました。
+- オプションページの、URL文字列の直接タブ表示の設定名で「を」が続いていた言い回しを直し、認識したURLで直接タブを開くという表現にしました。
 
 ## [1.2.0] - 2026-09-05
 

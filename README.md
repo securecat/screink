@@ -57,25 +57,11 @@ Text is read by [Tesseract.js](https://github.com/naptha/tesseract.js) (Apache L
 
 ## Changelog
 
-### [1.2.0] - 2026-09-05
-
-#### Added
-
-- URLs written as text are read as well. Where you point, screink still looks for a QR code first; when there is none, the line under your position is read as text and any URL in it is offered the same way. A URL with no scheme in front of it is treated as https.
-- A second direct-link setting, on the options page, for URLs read from text. It works on its own, independently of the popup's setting for QR codes, and says what turning it on means: text is not always read correctly, and a misread URL may not exist at all or may lead somewhere else entirely.
-
-#### Changed
-
-- The popup's checkbox is labelled "Open URLs from QR codes directly in a new tab". It only ever covered QR codes; now that text can be read too, it says which it is.
-- The buttons on the panel sit in two rows — what to do with what was read above, what to do with the reading itself below. "Point again" always starts the second row, so it no longer moves depending on how many buttons precede it.
-- "Copied" appears beside the button that was pressed rather than above the whole group.
-- The options page section is headed "See what was read" and describes the setting it holds, rather than being framed as something for when reading fails.
+### [1.2.1] - 2026-09-06
 
 #### Fixed
 
-- Stepping through candidates no longer resizes the panel. Candidates of different lengths made it grow and shrink, moving the buttons — including the one being pressed to step through them. The tallest candidate now sets the height for all of them.
-- "Copied" stayed until the next candidate was shown. It now goes once your attention has plainly moved on: when the inspect tab opens in front, or when the page loses focus.
-- Notes were too dark to read comfortably against the dark theme.
+- Reading no longer fails when two readings come close together. Chrome allows only so many captures a second, and going over ended the reading with a message about checking the tab is visible — which had nothing to do with the cause. It waits a moment and takes the picture again.
 
 For the full history, see [CHANGELOG.md](CHANGELOG.md).
 
@@ -140,24 +126,10 @@ QRコードのデコードには[jsQR](https://github.com/cozmo/jsQR)（Apache L
 
 ## 更新履歴
 
-### [1.2.0] - 2026-09-05
-
-#### 追加
-
-- 文字として書かれたURLも読み取れるようにしました。指した場所ではまずQRコードを探し、見つからなかったときに、指した位置を横切る行を文字として読み取ります。その中にURLがあれば、QRコードのときと同じ形で提示します。`https://` などが省略されている場合は https として扱います。
-- オプション設定に「URL文字列を直接タブを開く」を追加しました。ポップアップのQRコード用の設定とは独立に効きます。OCRの都合上、文字の読み取りは必ずしも正しいとは限らず、読み違えたURLは存在しないURLになったり、まったく別のページを指したりすることがあります。
-
-#### 変更
-
-- ポップアップのチェックボックスのラベルを「QRのURLは直接タブを開く」にしました。もともとQRコードだけが対象でしたが、文字も読み取るようになったためです。
-- 確認パネルのボタンを2行に分けました。1行目が読み取ったものへの操作、2行目が読み取りそのものへの操作です。「もう一度指す」は常に2行目の先頭に来るので、前にいくつボタンがあるかで位置が変わることがなくなりました。
-- 「コピーしました」を、押したボタンの隣に出すようにしました。
-- オプション設定の節の見出しを「読み取った内容を確認する」にし、その設定が何をONにするのかを書きました。「読み取れないとき」のためのもの、という枠組みをやめています。
+### [1.2.1] - 2026-09-06
 
 #### 修正
 
-- 候補を切り替えてもパネルの大きさが変わらないようにしました。長さの違う候補があると伸び縮みし、ボタンが動いていました——切り替えのために押している、そのボタンごとです。いちばん高い候補に合わせて高さを揃えます。
-- 「コピーしました」が次の候補を出すまで残り続けていました。注視が別へ移ったことが明白なタイミング——確認画面のタブが前に出たとき、ページから注視が外れたとき——で消えるようにしました。
-- ダークテーマで、注釈の文字が背景に対して暗すぎて読みにくくなっていました。
+- 続けて読み取ったときに失敗しなくなりました。Chrome は画面を取得できる回数を毎秒で制限していて、それを超えると読み取りごと失敗していました。しかも出るのは「タブが表示されているか確認してください」という、原因と関係のない案内でした。少し待って撮り直すようにしました。
 
 全履歴は [CHANGELOG.md](CHANGELOG.md) を参照してください。

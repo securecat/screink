@@ -169,7 +169,7 @@ export const MESSAGES = {
     optionsSavedLanguageJapanese: '日本語にして保存しました。',
     optionsTextUrlHeading: 'URL文字列の読み取り',
     optionsTextUrlNote: 'URL文字列は、表示サイズや内容によっては正しく読み取れない場合があります。認識結果によっては存在しないURLになったり、全く別のページを指し示すURLになったりする場合があります。',
-    optionsTextUrlLabel: 'URL文字列を直接タブを開く',
+    optionsTextUrlLabel: '認識したURLで直接タブを開く',
     optionsInspectHeading: '読み取った内容を確認する',
     optionsAutoOpenLabel: '読み取るたびに、読み取った画像を新しいタブで開く',
     optionsAutoOpenNote: 'ONにすると、直接タブを開かない設定の時に表示されるスクリーンクパネルの「読み取った内容を確認する」ボタンの内容が、常に表示されるようになります。会議中にタブが切り替わるのを避けたい場合はOFFのままにしてください。',
