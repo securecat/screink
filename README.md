@@ -8,7 +8,7 @@ You have probably seen how this ends. "Please fill in the survey here" appears a
 
 screink removes that detour. Point at where the URL or QR code is, and screink reads it and opens it in a new tab.
 
-> A URL written as text is read by OCR, so it is not always read correctly. Check what was read before opening it.
+> A URL written as text is read by OCR, so it is not always read correctly. A URL that runs across more than one line is not supported.
 
 screink does not depend on the internals of any particular meeting service. The only things it works from are the pixels visible on screen and the position you pointed at. That is what lets one implementation work in Microsoft Teams, in Google Meet, in Zoom, and on any other web page.
 
@@ -91,7 +91,7 @@ TeamsやGoogle Meet、Zoomなどをブラウザで使っているとき、参加
 
 スクリーンクは、この回り道をなくします。URLやQRコードが写っている場所を指すだけで、スクリーンクがそれを読み取り、新しいタブで開きます。
 
-> 文字として書かれたURLはOCRで読み取るため、必ずしも正しく読み取れるとは限りません。開く前に読み取った内容をご確認ください。
+> URL文字列はOCRで読み取るため、必ずしも正しく読み取れるとは限りません。また、複数行に渡るURLにも対応していません。
 
 スクリーンクは、特定の会議サービスの内部構造に依存しません。手がかりにするのは「画面に見えているピクセル」と「あなたが指した位置」だけです。そのおかげで、ひとつの実装でMicrosoft TeamsでもGoogle MeetでもZoomでも、その他のどんなWebページでも動くのです。
 
