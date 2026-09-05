@@ -36,7 +36,7 @@ https://chromewebstore.google.com/detail/screink/jlcokpeegaghadhdfjaoeaoibfgbemb
    - Move the crosshair with the arrow keys and press `Enter`
 4. Check the URL screink found, and open it
    - With **Open URLs from QR codes directly in a new tab** ticked in the popup, a URL from a QR code opens without asking
-   - **Open URLs read from text directly in a new tab**, on the options page, does the same for URLs read from text. The two work independently
+   - **Open URLs read from text directly in a new tab**, on the options page, does the same for URLs read from text.
    - If what was read is text rather than a URL, the panel appears whatever those are set to
 5. Press `Esc` at any time to leave aim mode
 
@@ -119,7 +119,7 @@ https://chromewebstore.google.com/detail/screink/jlcokpeegaghadhdfjaoeaoibfgbemb
    - 矢印キーで照準を動かして `Enter` を押す
 4. スクリーンクが見つけたURLを確認して開く
    - ポップアップの **QRのURLは直接タブを開く** をONにしている時は、QRコードから読み取ったURLを、確認を挟まず新しいタブで開きます
-   - オプション設定の **URL文字列を直接タブを開く** は、文字から読み取ったURLに対して同じことをします。2つは独立に効きます
+   - オプション設定の **URL文字列を直接タブを開く** は、文字から読み取ったURLに対して同じことをします。
    - 読み取った内容がURLでない場合は、どちらの設定でも確認パネルを表示します
 5. `Esc` を押せばいつでも照準モードを解除できます
 
