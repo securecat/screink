@@ -1,3 +1,12 @@
+> **This branch is on hold, and is not part of any release.**
+>
+> It reads a URL that runs across more than one line, behind an option that is off by default.
+> What stopped it is not the joining but the reading underneath it: on real slides the OCR gives
+> `nortal` for `portal`, and puts spaces inside a URL, so a correct join still produces a URL
+> that cannot be used. It is kept here to come back to once reading is more accurate.
+>
+> `main` has none of this. Nothing here is expected to ship as it stands.
+
 # screink
 
 ## Overview
@@ -80,6 +89,15 @@ Text is read by [Tesseract.js](https://github.com/naptha/tesseract.js) (Apache L
 For the full history, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
+
+> **このブランチは保留中で、リリースには含まれていません。**
+>
+> 複数行に折り返されたURLを読み取る機能を、既定OFFのオプションとして実装したものです。
+> 止めた理由は連結の判定ではなく、その手前の認識精度です。実物のスライドでは `portal` が
+> `nortal` になり、URLの途中に空白が入るため、連結が正しく働いても使えるURLになりません。
+> 精度が上がってから再開するために残してあります。
+>
+> `main` にこの変更は入っていません。この状態で公開する予定もありません。
 
 # スクリーンク
 
