@@ -18,6 +18,22 @@ h2 {
   font-size: 20px;
 }
 
+h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+/*
+ * 節の中の、さらにひとまとまり。見出し・説明・チェックボックスが
+ * 1つの話であることを枠で示す。
+ */
+.framed {
+  margin: 0 0 12px;
+  padding: 16px 16px 4px;
+  border: 1px dotted #767676;
+}
+
 .field {
   display: flex;
   align-items: flex-start;
