@@ -160,6 +160,9 @@ const URL_CHUNK = new RegExp(`^${URL_CHAR}+$`);
  */
 const URL_LOOKING = /[/?#&=_~+%:-]/;
 
+/** それ自体で新しいURLを始めている形。箇条書きでURLが並んだときに連結しないため。 */
+const NEW_URL_HEAD = /^(https?:\/\/|www\.)/i;
+
 /** 位置合わせの許容誤差を、行の高さの何倍にするか。 */
 const ALIGN_TOLERANCE = 0.6;
 /** スタイルが一致しているときは、位置合わせを少し緩める。 */
@@ -317,29 +320,21 @@ export function planLineJoins(lines, styles = []) {
       continue;
     }
 
-    // 5. スタイルが食い違っていない
-    const style = styles[line.index];
-    const nextStyle = styles[next.index];
-    if (styleConflicts(style, nextStyle)) {
-      decide(false, '見た目が違う');
-      continue;
-    }
-
-    // 3. 行送りが説明できる
-    const remaining = blockRight - line.x1;
-    const overflowed = remaining <= height * RIGHT_EDGE_TOLERANCE;
-    const tail = normalizeOcrText(line.words[line.words.length - 1]?.text).replace(/\s+/g, '');
-    const headWidth = head.bbox.x1 - head.bbox.x0;
-    const brokeAtTail = BREAKABLE_TAIL.test(tail) && headWidth > remaining;
-    if (!overflowed && !brokeAtTail) {
-      decide(false, '行が変わった理由を説明できない');
+    /*
+     * 2''. その塊が、それ自体で新しいURLを始めていないこと。
+     * 箇条書きでURLが2行並ぶと、そのままでは1つにつながってしまう。
+     */
+    if (NEW_URL_HEAD.test(headText)) {
+      decide(false, '次の行が別のURLとして始まっている');
       continue;
     }
 
     // 4. 次の行の先頭の位置が、ブロックの左端か、URLの開始位置に一致する
     const urlStart = line.words.find((word) =>
-      /^(https?:\/\/|www\.)/i.test(normalizeOcrText(word.text)),
+      NEW_URL_HEAD.test(normalizeOcrText(word.text)),
     );
+    const style = styles[line.index];
+    const nextStyle = styles[next.index];
     const tolerance =
       height * (styleMatches(style, nextStyle) ? ALIGN_TOLERANCE_STYLED : ALIGN_TOLERANCE);
     const alignedLeft = Math.abs(next.x0 - blockLeft) <= tolerance;
@@ -350,7 +345,29 @@ export function planLineJoins(lines, styles = []) {
       continue;
     }
 
-    decide(true, overflowed ? '行の右端で折り返している' : '行送りされうる文字で切れている');
+    /*
+     * 行送りの理由（右端まで届いた／行送りされうる文字で切れた）と、見た目の一致は
+     * **条件にしない。記録するだけ。** 手で改行されたURLは、短い行の途中で切れ、
+     * 前後で色も下線も変わる。実物（`work/for-screink-url-check-pptx(pdf).pdf` の
+     * `https://www.digit` / `al.go.jp/`）がそうなっており、それを弾いてはいけない。
+     * 仕様書 §5.5 を参照。
+     */
+    const remaining = blockRight - line.x1;
+    const overflowed = remaining <= height * RIGHT_EDGE_TOLERANCE;
+    const tail = normalizeOcrText(line.words[line.words.length - 1]?.text).replace(/\s+/g, '');
+    const headWidth = head.bbox.x1 - head.bbox.x0;
+    const brokeAtTail = BREAKABLE_TAIL.test(tail) && headWidth > remaining;
+
+    decide(
+      true,
+      overflowed
+        ? '行の右端で折り返している'
+        : brokeAtTail
+          ? '行送りされうる文字で切れている'
+          : styleConflicts(style, nextStyle)
+            ? '手で改行された（見た目は変わっている）'
+            : '手で改行された',
+    );
   }
 
   return decisions;
