@@ -5,6 +5,12 @@ All notable changes to screink are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.1] - 2026-09-08
+
+### Fixed
+
+- The "See what was read" setting's note used to tell people to keep it OFF to avoid tabs switching during a meeting. That no longer holds once tabs open in the background, so the note is gone.
+
 ## [1.3.0] - 2026-09-07
 
 ### Added
@@ -178,6 +184,12 @@ screink のすべての重要な変更点をこのファイルに記載します
 
 形式は [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) に基づき、
 バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
+
+## [1.3.1] - 2026-09-08
+
+### 修正
+
+- 「読み取った内容を確認する」設定の注記にあった「会議中にタブが切り替わるのを避けたい場合はOFFのままにしてください」という一文を削除しました。新しいタブがバックグラウンドで開くようにしていれば、この設定をONにしても会議中の画面は隠れないため、この注記は成り立たなくなりました。
 
 ## [1.3.0] - 2026-09-07
 

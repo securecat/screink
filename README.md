@@ -57,11 +57,11 @@ Text is read by [Tesseract.js](https://github.com/naptha/tesseract.js) (Apache L
 
 ## Changelog
 
-### [1.3.0] - 2026-09-07
+### [1.3.1] - 2026-09-08
 
-#### Added
+#### Fixed
 
-- An options-page setting for whether new tabs open as the active tab or in the background. It covers every tab screink opens for you: a direct link, the "Open" button on the screink panel, and the "See what was read" tab. Default is unchanged — as the active tab.
+- The "See what was read" setting's note used to tell people to keep it OFF to avoid tabs switching during a meeting. That no longer holds once tabs open in the background, so the note is gone.
 
 For the full history, see [CHANGELOG.md](CHANGELOG.md).
 
@@ -126,10 +126,10 @@ QRコードのデコードには[jsQR](https://github.com/cozmo/jsQR)（Apache L
 
 ## 更新履歴
 
-### [1.3.0] - 2026-09-07
+### [1.3.1] - 2026-09-08
 
-#### 追加
+#### 修正
 
-- 新しいタブをアクティブなタブとして開くか、バックグラウンドで開くかを選べるオプション設定を追加しました。ダイレクトリンク・スクリーンクパネルの「開く」ボタン・「読み取った内容を確認する」タブなど、スクリーンクが開くすべての新しいタブに効きます。既定は変わらず、アクティブなタブとして開きます。
+- 「読み取った内容を確認する」設定の注記にあった「会議中にタブが切り替わるのを避けたい場合はOFFのままにしてください」という一文を削除しました。新しいタブがバックグラウンドで開くようにしていれば、この設定をONにしても会議中の画面は隠れないため、この注記は成り立たなくなりました。
 
 全履歴は [CHANGELOG.md](CHANGELOG.md) を参照してください。
