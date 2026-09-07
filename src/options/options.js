@@ -14,10 +14,23 @@ const settings = await getSettings().catch(() => ({ ...DEFAULT_SETTINGS }));
 setLanguage(settings.uiLanguage);
 localizePage('optionsTitle');
 
-const languageStatus = document.querySelector('#language-status');
 const shortcutText = document.querySelector('#shortcut');
 const shortcutsButton = document.querySelector('#open-shortcuts');
 const languageInputs = [...document.querySelectorAll('input[name="uiLanguage"]')];
+const tabOpenInputs = [...document.querySelectorAll('input[name="tabOpenMode"]')];
+
+/*
+ * ラジオは選択肢ごとに行を分けている（縦積み）ので、「保存しました」の表示も
+ * 選択肢ごとに持つ。実際に文言が入るのは、いま選ばれている行の表示だけ。
+ */
+const languageStatuses = {
+  en: document.querySelector('#language-status-en'),
+  ja: document.querySelector('#language-status-ja'),
+};
+const tabOpenStatuses = {
+  active: document.querySelector('#tab-open-status-active'),
+  background: document.querySelector('#tab-open-status-background'),
+};
 
 /** チェックボックスの設定。設定名と、操作した行に出す「保存できた」の表示。 */
 const checkboxFields = {
@@ -39,6 +52,7 @@ const checkboxFields = {
  */
 const savedChecks = {};
 let savedLanguage = null;
+let savedTabOpenMode = null;
 
 /*
  * ショートカットキーの表記は実際の割り当てから作る（popup.js と同じ理由）。
@@ -58,10 +72,19 @@ function renderTexts() {
       saved === undefined || saved === null ? '' : t(saved ? 'optionsSavedOn' : 'optionsSavedOff');
   }
 
-  languageStatus.textContent =
-    savedLanguage === null
-      ? ''
-      : t(savedLanguage === 'ja' ? 'optionsSavedLanguageJapanese' : 'optionsSavedLanguageEnglish');
+  for (const [value, status] of Object.entries(languageStatuses)) {
+    status.textContent =
+      savedLanguage === value
+        ? t(value === 'ja' ? 'optionsSavedLanguageJapanese' : 'optionsSavedLanguageEnglish')
+        : '';
+  }
+
+  for (const [value, status] of Object.entries(tabOpenStatuses)) {
+    status.textContent =
+      savedTabOpenMode === value
+        ? t(value === 'background' ? 'optionsSavedTabOpenBackground' : 'optionsSavedTabOpenActive')
+        : '';
+  }
 }
 
 function populate(current) {
@@ -70,6 +93,8 @@ function populate(current) {
   // 未設定のときはブラウザのUI言語に合わせた側を選んでおく
   const language = resolveLanguage(current.uiLanguage);
   for (const input of languageInputs) input.checked = input.value === language;
+
+  for (const input of tabOpenInputs) input.checked = input.value === current.tabOpenMode;
 }
 
 /*
@@ -90,6 +115,7 @@ document.addEventListener('focusin', (event) => {
     if (field.input !== event.target) savedChecks[key] = null;
   }
   if (!languageInputs.includes(event.target)) savedLanguage = null;
+  if (!tabOpenInputs.includes(event.target)) savedTabOpenMode = null;
   renderTexts();
 });
 
@@ -117,6 +143,15 @@ for (const input of languageInputs) {
   });
 }
 
+for (const input of tabOpenInputs) {
+  input.addEventListener('change', async () => {
+    if (!input.checked) return;
+    await saveSetting('tabOpenMode', input.value);
+    savedTabOpenMode = input.value;
+    renderTexts();
+  });
+}
+
 /*
  * ページから離れたら消す。
  * 次に戻ってきたときに、いつのものとも分からない結果が残っていない状態にする。
@@ -125,6 +160,7 @@ for (const input of languageInputs) {
 window.addEventListener('blur', () => {
   for (const key of Object.keys(checkboxFields)) savedChecks[key] = null;
   savedLanguage = null;
+  savedTabOpenMode = null;
   renderTexts();
 });
 

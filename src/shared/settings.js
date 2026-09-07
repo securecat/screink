@@ -71,6 +71,17 @@ export const DEFAULT_SETTINGS = {
    * 据え置きの表明であり、使うたびに変える種類の選択ではないため。仕様書 §5.4）。
    */
   directLinkText: false,
+
+  /**
+   * screink が読み取りの結果として新しいタブを開くとき、それをアクティブなタブにするか
+   * バックグラウンドで開くか（`'active'` / `'background'`）。
+   *
+   * 既定は `'active'`（従来の挙動）。ダイレクトリンク・確認パネルの「開く」ボタン・
+   * 「読み取った内容を確認する」タブのいずれにも共通に効く。会議中に何度も読み取ると、
+   * そのたびに共有画面が隠れてしまうのを避けたい人のための設定（オプション設定に置く。
+   * 使うたびに変える種類の選択ではないため）。
+   */
+  tabOpenMode: 'active',
 };
 
 export const SETTING_LIMITS = {
@@ -82,6 +93,11 @@ export const SETTING_LIMITS = {
 /** 表示言語は 'en' / 'ja' のみ受け付ける。それ以外は未設定（＝ブラウザに合わせる）とする。 */
 function normalizeLanguage(value) {
   return value === 'en' || value === 'ja' ? value : '';
+}
+
+/** 新しいタブの開き方は 'active' / 'background' のみ受け付ける。それ以外は既定（'active'）とする。 */
+function normalizeTabOpenMode(value) {
+  return value === 'background' ? 'background' : 'active';
 }
 
 /** 数値設定を範囲内に収める。不正値は既定値へ戻す。 */
@@ -104,11 +120,13 @@ export async function getSettings() {
     openCaptureInTab: Boolean(stored.openCaptureInTab),
     directLink: Boolean(stored.directLink),
     directLinkText: Boolean(stored.directLinkText),
+    tabOpenMode: normalizeTabOpenMode(stored.tabOpenMode),
   };
 }
 
 function normalizeSetting(key, value) {
   if (key === 'uiLanguage') return normalizeLanguage(value);
+  if (key === 'tabOpenMode') return normalizeTabOpenMode(value);
   if (key in SETTING_LIMITS) return clampNumber(key, value);
   return Boolean(value);
 }

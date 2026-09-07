@@ -1136,7 +1136,7 @@ async function runOcr(dataUrl) {
  * 見ずに開いてよいと言えるかどうかが違うので、設定も別にしてある。
  *
  * @param {Array<{kind: string, engine: string, url: string | null}>} candidates
- * @param {{directLink: boolean, directLinkText: boolean}} settings
+ * @param {{directLink: boolean, directLinkText: boolean, tabOpenMode: string}} settings
  */
 async function openFirstUrl(candidates, settings) {
   const candidate = candidates.find(
@@ -1148,7 +1148,7 @@ async function openFirstUrl(candidates, settings) {
   if (!url) return null;
 
   try {
-    await chrome.tabs.create({ url });
+    await chrome.tabs.create({ url, active: settings.tabOpenMode !== 'background' });
     return url;
   } catch (error) {
     // 開けなかったときは黙って確認パネルへ落とす（呼び出し側が null を見る）
@@ -1208,7 +1208,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const result = await recognize(tab, message);
         const settings = await getSettings();
         if (settings.openCaptureInTab) {
-          await chrome.tabs.create({ url: chrome.runtime.getURL('src/debug/capture.html') });
+          await chrome.tabs.create({
+            url: chrome.runtime.getURL('src/debug/capture.html'),
+            active: settings.tabOpenMode !== 'background',
+          });
         }
         /*
          * ダイレクトリンクがONなら、確認パネルを経ずにここで開く。
@@ -1244,7 +1247,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
       try {
-        await chrome.tabs.create({ url });
+        const settings = await getSettings();
+        await chrome.tabs.create({ url, active: settings.tabOpenMode !== 'background' });
         sendResponse({ ok: true, url });
       } catch (error) {
         sendResponse({ ok: false, reason: 'open-failed', detail: String(error) });
@@ -1254,8 +1258,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (type === MESSAGES.OPEN_CAPTURE_TAB) {
-    chrome.tabs
-      .create({ url: chrome.runtime.getURL('src/debug/capture.html') })
+    getSettings()
+      .then((settings) =>
+        chrome.tabs.create({
+          url: chrome.runtime.getURL('src/debug/capture.html'),
+          active: settings.tabOpenMode !== 'background',
+        }),
+      )
       .then(() => sendResponse({ ok: true }))
       .catch((error) => sendResponse({ ok: false, detail: String(error) }));
     return true;

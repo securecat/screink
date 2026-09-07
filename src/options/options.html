@@ -18,20 +18,26 @@
         （HTML の legend は heading content を許す）、他の節と同じ h2 の見出しのまま、
         グループとしての名前も付く。role="radiogroup" を自分で書く必要はない。
 
+        選択肢は1つずつ .field の行にする（チェックボックスの行と同じ形）。
+        横に並べて詰めると、選択肢が増えたときや「保存しました」の表示が伸びたときに
+        折り返して崩れる。縦に積んでおけば、その心配がない。
+
         なお、拡張名・拡張の説明・ショートカットキーの説明は manifest 由来のため、
         ここで選んだ言語では切り替わらない（Chrome がブラウザのUI言語で解決する）。
       -->
       <fieldset class="group">
         <legend><h2 data-i18n="optionsLanguageHeading">UI language</h2></legend>
 
-        <div class="field field--radios">
+        <div class="field">
           <input type="radio" id="ui-language-en" name="uiLanguage" value="en" />
           <label for="ui-language-en" data-i18n="optionsLanguageEnglish">English</label>
+          <span class="save-status" id="language-status-en" role="status"></span>
+        </div>
 
+        <div class="field">
           <input type="radio" id="ui-language-ja" name="uiLanguage" value="ja" />
           <label for="ui-language-ja" data-i18n="optionsLanguageJapanese">Japanese</label>
-
-          <span class="save-status" id="language-status" role="status"></span>
+          <span class="save-status" id="language-status-ja" role="status"></span>
         </div>
       </fieldset>
 
@@ -71,6 +77,27 @@
         </label>
         <span class="save-status" id="status" role="status"></span>
       </div>
+
+      <fieldset class="group">
+        <legend><h2 data-i18n="optionsTabOpenHeading">How new tabs open</h2></legend>
+
+        <p class="note" data-i18n="optionsTabOpenNote">
+          This applies to every new tab screink opens for you: a direct link, the “Open” button on
+          the screink panel, and the “See what was read” tab.
+        </p>
+
+        <div class="field">
+          <input type="radio" id="tab-open-active" name="tabOpenMode" value="active" />
+          <label for="tab-open-active" data-i18n="optionsTabOpenActive">As the active tab</label>
+          <span class="save-status" id="tab-open-status-active" role="status"></span>
+        </div>
+
+        <div class="field">
+          <input type="radio" id="tab-open-background" name="tabOpenMode" value="background" />
+          <label for="tab-open-background" data-i18n="optionsTabOpenBackground">In the background</label>
+          <span class="save-status" id="tab-open-status-background" role="status"></span>
+        </div>
+      </fieldset>
 
       <h2 data-i18n="optionsShortcutHeading">Keyboard shortcut</h2>
 
