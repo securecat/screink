@@ -57,12 +57,11 @@ Text is read by [Tesseract.js](https://github.com/naptha/tesseract.js) (Apache L
 
 ## Changelog
 
-### [1.2.1] - 2026-09-06
+### [1.3.0] - 2026-09-07
 
-#### Fixed
+#### Added
 
-- Reading no longer fails when two readings come close together. Chrome allows only so many captures a second, and going over ended the reading with a message about checking the tab is visible — which had nothing to do with the cause. It waits a moment and takes the picture again.
-- The options page label for the text-URL direct-link setting now says it opens the recognized URL, not the raw text.
+- An options-page setting for whether new tabs open as the active tab or in the background. It covers every tab screink opens for you: a direct link, the "Open" button on the screink panel, and the "See what was read" tab. Default is unchanged — as the active tab.
 
 For the full history, see [CHANGELOG.md](CHANGELOG.md).
 
@@ -127,11 +126,10 @@ QRコードのデコードには[jsQR](https://github.com/cozmo/jsQR)（Apache L
 
 ## 更新履歴
 
-### [1.2.1] - 2026-09-06
+### [1.3.0] - 2026-09-07
 
-#### 修正
+#### 追加
 
-- 続けて読み取ったときに失敗しなくなりました。Chrome は画面を取得できる回数を毎秒で制限していて、それを超えると読み取りごと失敗していました。しかも出るのは「タブが表示されているか確認してください」という、原因と関係のない案内でした。少し待って撮り直すようにしました。
-- オプションページの、URL文字列の直接タブ表示の設定名で「を」が続いていた言い回しを直し、認識したURLで直接タブを開くという表現にしました。
+- 新しいタブをアクティブなタブとして開くか、バックグラウンドで開くかを選べるオプション設定を追加しました。ダイレクトリンク・スクリーンクパネルの「開く」ボタン・「読み取った内容を確認する」タブなど、スクリーンクが開くすべての新しいタブに効きます。既定は変わらず、アクティブなタブとして開きます。
 
 全履歴は [CHANGELOG.md](CHANGELOG.md) を参照してください。

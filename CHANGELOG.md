@@ -5,6 +5,12 @@ All notable changes to screink are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-09-07
+
+### Added
+
+- An options-page setting for whether new tabs open as the active tab or in the background. It covers every tab screink opens for you: a direct link, the "Open" button on the screink panel, and the "See what was read" tab. Default is unchanged — as the active tab.
+
 ## [1.2.1] - 2026-09-06
 
 ### Fixed
@@ -172,6 +178,12 @@ screink のすべての重要な変更点をこのファイルに記載します
 
 形式は [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) に基づき、
 バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
+
+## [1.3.0] - 2026-09-07
+
+### 追加
+
+- 新しいタブをアクティブなタブとして開くか、バックグラウンドで開くかを選べるオプション設定を追加しました。ダイレクトリンク・スクリーンクパネルの「開く」ボタン・「読み取った内容を確認する」タブなど、スクリーンクが開くすべての新しいタブに効きます。既定は変わらず、アクティブなタブとして開きます。
 
 ## [1.2.1] - 2026-09-06
 
