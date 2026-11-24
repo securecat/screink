@@ -165,7 +165,14 @@ window.addEventListener('blur', () => {
 });
 
 shortcutsButton.addEventListener('click', async () => {
-  // chrome:// は <a href> から開けないため、ここだけボタンで遷移させる
+  /*
+   * chrome:// のページは、拡張のページからのリンクでは開けない
+   * （Chrome がブロックし、about:blank#blocked になる）。
+   * <a> にして click だけを JS で開いても、中クリック・右クリックメニューの
+   * 「新しいタブで開く」・タブバーへのドラッグなど、リンクとしての操作の多くは
+   * 同じようにブロックされ、すべてを潰すことはできない。
+   * 動かないリンクに見せるより、ボタンにしている。
+   */
   await chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
 });
 
