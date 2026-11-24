@@ -22,7 +22,7 @@ For the UI, we target WCAG 2.2 Level AA, and we treat it as a minimum, not a cei
 - To aim, you need to know where the QR code or URL is on the screen, so this step depends on visual information. The result panel that appears afterwards is text, and screen readers read it.
 - After you confirm a position, the aim mode display disappears until the result panel appears, and nothing is shown or announced in the meantime. This usually takes well under a second, but reading a URL written as text took up to about 2 seconds in our measurements. When the result panel appears, focus moves to a button on the panel. If you have set URLs to open directly in a new tab, the tab opens instead of the panel.
 - Each press of an arrow key moves the crosshair 8px (1px with Shift). The crosshair starts in the middle of the screen, so moving it to an edge takes many presses. Holding the key down keeps the crosshair moving.
-- Aim mode draws the light outline around the crosshair and frames with `box-shadow`, which is not shown in Windows contrast themes (forced colors mode). In these themes, the crosshair can be hard to see against the page. Two things are not shown at all: the frame around the screen that shows aim mode is on, and the outline of the result panel. The mouse pointer still changes to a crosshair while you are aiming, and the bar at the top of the screen still shows that aim mode is on.
+- Aim mode draws the light outline around the crosshair and frames with `box-shadow`, which is not shown in Windows contrast themes (forced colors mode). In these themes, the crosshair can be hard to see against the page. Two things are not shown at all: the frame around the screen that shows aim mode is on, and the outline of the result panel. The mouse pointer still changes to a crosshair while you are aiming, and the bar at the top of the screen still shows that aim mode is on. The frame that marks where a QR code or URL was found is drawn with `border`, so it is shown in these themes too.
 
 ## Effects of Aim Mode on the Page
 
@@ -113,7 +113,7 @@ UIは WCAG 2.2 のレベル AA を目標とし、これを上限ではなく下�
 - 照準を合わせるには、QRコードやURLが画面上のどこにあるかを把握している必要があり、この操作は視覚的な情報に頼っています。そのあとに表示される結果パネルはテキストで、スクリーンリーダーで読み上げられます。
 - 位置を確定してから結果パネルが表示されるまでのあいだ、照準モードの表示が消え、何も表示されず、読み上げもされません。多くの場合は1秒にも満たない時間ですが、文字で書かれたURLを読み取るときは、実測で最大2秒ほどかかりました。結果パネルが表示されると、フォーカスがパネル内のボタンへ移ります。直接タブを開く設定にしている場合は、パネルの代わりに新しいタブが開きます。
 - 矢印キーを1回押すと、照準は 8px（Shift を押しながらだと 1px）動きます。照準は画面の中央から始まるため、画面の端まで動かすには何度も押す必要があります。キーを押し続けると、照準は続けて動きます。
-- 照準モードでは、照準線や枠の明るい縁取りを `box-shadow` で描いていますが、Windows のコントラストテーマ（強制カラーモード）では `box-shadow` が表示されません。そのため、このテーマでは照準線がページに紛れて見えにくくなることがあり、照準モード中であることを示す画面の縁取りと、結果パネルの外枠は表示されません。照準を合わせているあいだもマウスポインターは十字の形に変わり、画面上部のバーで照準モード中であることも分かります。
+- 照準モードでは、照準線や枠の明るい縁取りを `box-shadow` で描いていますが、Windows のコントラストテーマ（強制カラーモード）では `box-shadow` が表示されません。そのため、このテーマでは照準線がページに紛れて見えにくくなることがあり、照準モード中であることを示す画面の縁取りと、結果パネルの外枠は表示されません。照準を合わせているあいだもマウスポインターは十字の形に変わり、画面上部のバーで照準モード中であることも分かります。また、見つかったQRコードやURLの位置を示す枠は `border` で描いているため、このテーマでも表示されます。
 
 ## 照準モードがページの操作に与える影響
 
